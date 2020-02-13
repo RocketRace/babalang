@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::Read;
+use std::collections::HashMap;
 
-use crate::token::{LexToken, Token};
+use crate::token::{LexToken, parse};
+use crate::error_handler::{ErrorType, throw_error};
 
 /// The simple internal state of the lexer.
 /// 
@@ -14,85 +16,107 @@ enum State {
 /// Tokenizes a Baba source file from the given path.
 /// 
 /// Returns a vector of tokens if tokenization is successful.
-pub fn tokenize(path: &str) -> Result<Vec<LexToken>, &'static str> {
+pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
+
     let mut file = match File::open(path) {
         Ok(f) => f,
-        Err(_) => panic!()
+        Err(_) => {
+            throw_error(
+                ErrorType::FileNotFoundError, 
+                &format!("Could not open file at `{}`", path)
+            );
+            panic!()
+        }
     };
 
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
 
     let mut out: Vec<LexToken> = Vec::new();
-    let mut word: Vec<char> = Vec::new();
-
+    let mut identifiers: HashMap<String, usize> = HashMap::new();
     let mut state = State::Separator;
+    let mut word_start = 0;
 
-    for byte in buffer {
+    for (i, &byte) in buffer.iter().enumerate() {
         let c = char::from(byte)
             .to_lowercase().next()
             .unwrap();
-        // simple state machine
+        // Simple state machine
         match state {
-            // not in a word
+            // Not in a word
             State::Separator => {
-                // begin new word
+                // Begin new word
                 if c.is_ascii_alphanumeric() || c == '_' {
                     state = State::Word;
-                    word.push(c);
+                }
+                else {
+                    // The current word won't start here yet
+                    word_start += 1;
                 }
             },
-            // in a word
+            // In a word
             State::Word => {
-                // continue existing word
+                // Continue existing word
                 if c.is_ascii_alphanumeric() || c == '_' {
-                    word.push(c);
+                    state = State::Word;
                 }
-                // parse the current word into a token
+                // Parse the current word into a token
                 else {
-                    // empty strings aren't tokens
-                    let token = match LexToken::parse(&word){
-                        Some(t) => t,
-                        None => panic!()
+                    state = State::Separator;
+                    let word = &buffer[word_start..i];
+                    // Empty strings aren't tokens (we should never encounter any)
+                    if let Some(token) = parse(word, &mut identifiers) {
+                        out.push(token);
+                    }
+                    else {
+                        throw_error(
+                            ErrorType::LexerError,
+                            &format!("Failed to parse input: {:?}", &word)
+                        );
                     };
-                    out.push(token);
-                    word.clear();
+                    word_start = i + 1;
                 }
             }
         }
     }
     // Account for EOF
-    if word.len() > 0 {
-        let token = match LexToken::parse(&word){
-            Some(t) => t,
-            None => panic!()
+    if let State::Word = state {
+        let word = &buffer[word_start..];
+        if let Some(token) = parse(word, &mut identifiers) {
+            out.push(token);
+        }
+        else {
+            throw_error(
+                ErrorType::LexerError,
+                &format!("Failed to parse input: {:?}", &word)
+            );
         };
-        out.push(token);
-        word.clear();
     }
+    let output = out.to_owned();
+    let id = identifiers.to_owned();
 
-    Ok(out)
+    (output, id)
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::token::{Noun, Verb, Property};
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use crate::token::{NounToken, VerbToken, PropertyToken};
+//     use super::*;
 
-    #[test]
-    fn test_tokenize() {
-        assert_eq!(
-            // File to be tokenized
-            tokenize("test.baba").unwrap(), 
-            // Expected result
-            vec![
-                LexToken::NounToken(Noun::Identifier(String::from("baba"))), 
-                LexToken::VerbToken(Verb::Is), 
-                LexToken::PropertyToken(Property::You),
-                LexToken::NounToken(Noun::Identifier(String::from("baba"))), 
-                LexToken::VerbToken(Verb::Is), 
-                LexToken::PropertyToken(Property::Move),
-            ]
-        );
-    }
-}
+//     #[test]
+//     fn test_tokenize() {
+//         assert_eq!(
+//             // File to be tokenized
+//             tokenize("test.baba"),
+//             // Expected result
+//             vec![
+//                 LexToken::Noun(NounToken::Identifier(String::from("baba"))), 
+//                 LexToken::Verb(VerbToken::Is), 
+//                 LexToken::Property(PropertyToken::You),
+//                 LexToken::Noun(NounToken::Identifier(String::from("baba"))), 
+//                 LexToken::Verb(VerbToken::Is), 
+//                 LexToken::Property(PropertyToken::Move),
+//             ]
+//         );
+//     }
+// }
