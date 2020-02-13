@@ -1,5 +1,6 @@
 mod error_handler;
 mod lexer;
+mod statement;
 mod statement_parser;
 mod token;
 
