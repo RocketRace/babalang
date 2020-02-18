@@ -2,7 +2,7 @@ use crate::token::{NounToken, VerbToken, PropertyToken, ConditionalToken, LexTok
 use crate::statement::{Target, Statement, append_statement};
 use crate::error_handler::{ErrorType, throw_error};
 
-/// The internal state of the finite state machine.
+/// The internal state of the statement parser.
 #[derive(Debug)]
 enum ParserState {
     // Subject
@@ -22,7 +22,16 @@ enum ParserState {
 }
 
 /// Parses a stream of Baba tokens into a stream of statements.
+/// Statements are parsed using a subset of the grammar used
+/// in the original Baba Is You Game.
 /// 
+/// # Arguments
+/// 
+/// * `tokens` - A slice of tokens to read.
+/// 
+/// # Return
+/// 
+/// Returns a `Vec` of `Statement` objects.
 pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
     let mut out = Vec::new();
     let mut state = ParserState::Blank;

@@ -11,7 +11,16 @@ fn main() -> std::io::Result<()> {
     // Get path of source file
     let mut args = env::args();
     let _program_path = args.next().unwrap();
-    let file_path = args.next().unwrap();
+    let file_path = match args.next() {
+        Some(x) => x,
+        None => {
+            error_handler::throw_error(
+                error_handler::ErrorType::FileError,
+                "File not provided."
+            );
+            panic!() // necessary for the match arms to match 
+        }
+    };
 
     // Tokenize the source file and return a vector of tokens
     let (tokens, identifiers) = lexer::tokenize(&file_path);

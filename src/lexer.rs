@@ -14,18 +14,30 @@ enum State {
 }
 
 /// Tokenizes a Baba source file from the given path.
+/// Returns a vector of tokens if tokenization is successful,
+/// as well as a hashmap of the identifiers encountered.
 /// 
-/// Returns a vector of tokens if tokenization is successful.
+/// # Arguments
+/// 
+/// * `path` - Source path for the program being tokenized.
+/// 
+/// # Return
+/// 
+/// Returns a tuple containing:
+/// 
+/// * `Vec<LexToken>` - The tokens parsed from the file.
+/// 
+/// * `HashMap<String, usize>` - A mapping between identifiers (e.g. "baba")
+/// and their corresponding IDs.
 pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
-
     let mut file = match File::open(path) {
         Ok(f) => f,
         Err(_) => {
             throw_error(
-                ErrorType::FileNotFoundError, 
+                ErrorType::FileError, 
                 &format!("Could not open file at `{}`", path)
             );
-            panic!()
+            panic!() // necessary for match arms to match
         }
     };
 
@@ -98,25 +110,39 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
     (output, id)
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::token::{NounToken, VerbToken, PropertyToken};
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use crate::lexer::tokenize;
+    use crate::token::{LexToken, NounToken, VerbToken, PropertyToken, ConditionalToken};
 
-//     #[test]
-//     fn test_tokenize() {
-//         assert_eq!(
-//             // File to be tokenized
-//             tokenize("test.baba"),
-//             // Expected result
-//             vec![
-//                 LexToken::Noun(NounToken::Identifier(String::from("baba"))), 
-//                 LexToken::Verb(VerbToken::Is), 
-//                 LexToken::Property(PropertyToken::You),
-//                 LexToken::Noun(NounToken::Identifier(String::from("baba"))), 
-//                 LexToken::Verb(VerbToken::Is), 
-//                 LexToken::Property(PropertyToken::Move),
-//             ]
-//         );
-//     }
-// }
+    #[test]
+    fn tokenize_alnum() {
+        let path = "tests/tokenize_alnum.baba";
+        let (tokens, identifiers) = tokenize(path);
+
+        assert_eq!(
+            tokens,
+            vec![
+                LexToken::Noun(NounToken::Identifier(0)),
+                LexToken::Noun(NounToken::Identifier(0)),
+                LexToken::Noun(NounToken::Identifier(0)),
+                LexToken::Noun(NounToken::Identifier(0)),
+                LexToken::Verb(VerbToken::Is),
+                LexToken::Verb(VerbToken::Is),
+                LexToken::Verb(VerbToken::Is),
+                LexToken::Verb(VerbToken::Is),
+                LexToken::Noun(NounToken::Identifier(1)),
+                LexToken::Noun(NounToken::Identifier(1)),
+                LexToken::Noun(NounToken::Identifier(1)),
+                LexToken::Noun(NounToken::Identifier(1)),
+                LexToken::Noun(NounToken::Empty),
+                LexToken::Noun(NounToken::Empty),
+                LexToken::Noun(NounToken::Empty),
+                LexToken::Noun(NounToken::Identifier(2)),
+                LexToken::Noun(NounToken::Identifier(3)),
+                LexToken::Noun(NounToken::Identifier(4)),
+                LexToken::Noun(NounToken::Identifier(5))
+            ]
+        )
+    }
+}
