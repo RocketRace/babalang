@@ -11,8 +11,6 @@ enum ParserState {
     // Major conditional 
     ExpectsMajCond, MajCond, MajCondTarget, CondAnd, 
     MajCondFacing, MajCondFacingTarget, CondFacingAnd,
-    // Minor conditional
-    ExpectsMinCond, MinCond, MinCondFacing, MinCondTarget,
     // Major action: IS
     MajAct, MajActTarget, ActAnd, ExpectsMajActTarget,
     // Major action: other verbs
@@ -41,9 +39,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
     let mut major_cond: Option<ConditionalToken> = None;
     let mut major_cond_sign = false;
     let mut major_cond_targets: Vec<Target> = Vec::new();
-    let mut minor_cond: Option<ConditionalToken> = None;
-    let mut minor_cond_sign = false;
-    let mut minor_cond_target: Option<Target> = None;
     let mut action_type: Option<VerbToken> = None;
     let mut action_targets: Vec<Target> = Vec::new();
     let mut action_sign = false;
@@ -211,24 +206,10 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     major_cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
-                else if let LexToken::Conditional(cond) = token {
-                    // Minor conditionals also account for FACING
-                    if let ConditionalToken::Facing = cond {
-                        state = ParserState::MinCondFacing;
-                    }
-                    else {
-                        state = ParserState::MinCond;
-                    }
-                    minor_cond = Some(*cond);
-                }
-                else if let LexToken::Not = token {
-                    minor_cond_sign = !minor_cond_sign;
-                    state = ParserState::ExpectsMinCond;
-                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Verb or Not, got {:?}", token)
+                        &format!("Expected Noun, got {:?}", token)
                     );
                 }
             },
@@ -254,103 +235,10 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     }
                     state = ParserState::MajCondFacingTarget;
                 }
-                else if let LexToken::Conditional(cond) = token {
-                    // Minor conditionals also account for FACING
-                    if let ConditionalToken::Facing = cond {
-                        state = ParserState::MinCondFacing;
-                    }
-                    else {
-                        state = ParserState::MinCond;
-                    }
-                    minor_cond = Some(*cond);
-                }
-                else if let LexToken::Not = token {
-                    minor_cond_sign = !minor_cond_sign;
-                    state = ParserState::ExpectsMinCond;
-                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Property, Conditional or Not, got {:?}", token)
-                    );
-                }
-            },
-            ParserState::ExpectsMinCond => {
-                if let LexToken::Conditional(cond) = token {
-                    if let ConditionalToken::Facing = cond {
-                        state = ParserState::MinCondFacing;
-                    }
-                    else {
-                        state = ParserState::MinCond;
-                    }
-                    minor_cond = Some(*cond);
-                }
-                else if let LexToken::Not = token {
-                    minor_cond_sign = !minor_cond_sign;
-                    state = ParserState::ExpectsMinCond;
-                }
-                else {
-                    throw_error(
-                        ErrorType::StatementParserError,
-                        &format!("Expected Conditional or Not, got {:?}", token)
-                    );
-                }
-            },
-            ParserState::MinCond => {
-                if let LexToken::Noun(noun) = token {
-                    state = ParserState::MinCondTarget;
-                    minor_cond_target = Some(Target::Noun(*noun));
-                }
-                else {
-                    throw_error(
-                        ErrorType::StatementParserError,
-                        &format!("Expected Noun, got {:?}", token)
-                    );
-                }
-            },
-            ParserState::MinCondFacing => {
-                if let LexToken::Noun(noun) = token {
-                    state = ParserState::MinCondTarget;
-                    minor_cond_target = Some(Target::Noun(*noun));
-                }
-                else if let LexToken::Property(prop) = token {
-                    match prop {
-                        PropertyToken::Up | PropertyToken::Down | PropertyToken::Left | PropertyToken::Right => {
-                            minor_cond_target = Some(Target::Property(*prop))
-                        },
-                        _ => {
-                            throw_error(
-                                ErrorType::StatementParserError, 
-                                &format!(
-                                    "Property words following Facing must be Up, Down, Left or Right, not {:?}",
-                                    prop
-                                )
-                            )
-                        }
-                    }
-                    state = ParserState::MinCondTarget;
-                }
-                else {
-                    throw_error(
-                        ErrorType::StatementParserError,
-                        &format!("Expected Noun or Property, got {:?}", token)
-                    );
-                }
-            },
-            ParserState::MinCondTarget => {
-                if let LexToken::Verb(verb) = token {
-                    if let VerbToken::Is = verb {
-                        state = ParserState::MajIs;
-                    }
-                    else {
-                        state = ParserState::MajAct;
-                    }
-                    action_type = Some(*verb);
-                }
-                else {
-                    throw_error(
-                        ErrorType::StatementParserError,
-                        &format!("Expected Verb, got {:?}", token)
+                        &format!("Expected Noun or Property got {:?}", token)
                     );
                 }
             },
@@ -402,9 +290,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -435,9 +320,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -477,9 +359,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -523,9 +402,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -597,9 +473,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -622,9 +495,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &major_cond, 
                         &Some(major_cond_sign), 
                         Some(&major_cond_targets),
-                        &minor_cond, 
-                        &Some(minor_cond_sign), 
-                        &minor_cond_target, 
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -663,9 +533,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 &major_cond, 
                 &Some(major_cond_sign), 
                 Some(&major_cond_targets),
-                &minor_cond, 
-                &Some(minor_cond_sign), 
-                &minor_cond_target, 
                 &action_type.unwrap(), 
                 &action_targets, 
                 &action_signs
@@ -679,9 +546,6 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 &major_cond, 
                 &Some(major_cond_sign), 
                 Some(&major_cond_targets),
-                &minor_cond, 
-                &Some(minor_cond_sign), 
-                &minor_cond_target, 
                 &action_type.unwrap(), 
                 &action_targets, 
                 &action_signs
