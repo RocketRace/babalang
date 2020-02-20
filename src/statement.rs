@@ -1,4 +1,4 @@
-use crate::token::{NounToken, PropertyToken, VerbToken, ConditionalToken};
+use crate::token::{NounToken, PropertyToken, PrefixToken, VerbToken, ConditionalToken};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Target {
@@ -8,6 +8,8 @@ pub enum Target {
 
 #[derive(Clone, Debug)]
 pub struct Statement {
+    prefix: Option<PrefixToken>,
+    prefix_sign: Option<bool>,
     subject: NounToken,
     major_cond_type: Option<ConditionalToken>,
     major_cond_sign: Option<bool>,
@@ -22,6 +24,8 @@ pub struct Statement {
 // Adds a statement to the stream
 pub fn append_statement(
     out: &mut Vec<Statement>, 
+    prefix: &Option<PrefixToken>,
+    prefix_sign: &Option<bool>,
     subject: &NounToken, 
     major_cond_type: &Option<ConditionalToken>,
     major_cond_sign: &Option<bool>,
@@ -43,6 +47,8 @@ pub fn append_statement(
             else {
                 // TODO split into 'targets' and 'target'
                 let statement = Statement {
+                    prefix: *prefix,
+                    prefix_sign: *prefix_sign,
                     subject: *subject,
                     major_cond_type: *major_cond_type,
                     major_cond_sign: *major_cond_sign,
@@ -63,6 +69,8 @@ pub fn append_statement(
         if start_index != total {
             // TODO split into 'targets' and 'target'
             let statement = Statement {
+                prefix: *prefix,
+                prefix_sign: *prefix_sign,
                 subject: *subject,
                 major_cond_type: *major_cond_type,
                 major_cond_sign: *major_cond_sign,
@@ -85,6 +93,8 @@ pub fn append_statement(
         // TODO split into 'targets' and 'target'
         for (i, target) in action_targets.iter().enumerate() {
             let statement = Statement {
+                prefix: *prefix,
+                prefix_sign: *prefix_sign,
                 subject: *subject,
                 major_cond_type: *major_cond_type,
                 major_cond_sign: *major_cond_sign,

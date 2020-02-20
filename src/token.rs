@@ -32,6 +32,12 @@ pub enum PropertyToken {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PrefixToken {
+    Idle,
+    Lonely
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ConditionalToken {
     On,
     Near,
@@ -45,6 +51,7 @@ pub enum LexToken {
     Noun(NounToken),
     Verb(VerbToken),
     Property(PropertyToken),
+    Prefix(PrefixToken),
     Not,
     And,
     Conditional(ConditionalToken)
@@ -87,6 +94,9 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "text" => LexToken::Property(PropertyToken::Text),
             "up" => LexToken::Property(PropertyToken::Up),
             "you" => LexToken::Property(PropertyToken::You),
+            // Prefix keywords 
+            "idle" => LexToken::Prefix(PrefixToken::Idle),
+            "lonely" => LexToken::Prefix(PrefixToken::Lonely),
             // "And"
             "and" => LexToken::And,
             // "Not"
@@ -121,13 +131,13 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
 /// Token parsing tests
 #[cfg(test)]
 mod tests {
-    use crate::token::{parse, LexToken, NounToken, VerbToken, PropertyToken, ConditionalToken};
+    use crate::token::{parse, LexToken, NounToken, VerbToken, PropertyToken, PrefixToken, ConditionalToken};
     use std::collections::HashMap;
     #[test]
     fn parse_keywords_all() {
         // Line breaks are not significant here, since this test filters them out
         let string = "all empty eat fear follow has is make mimic play 
-        down left move right text up you and not facing near on without";
+        down left move right text up you idle lonely and not facing near on without";
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
@@ -154,6 +164,8 @@ mod tests {
                 LexToken::Property(PropertyToken::Text),
                 LexToken::Property(PropertyToken::Up),
                 LexToken::Property(PropertyToken::You),
+                LexToken::Prefix(PrefixToken::Idle),
+                LexToken::Prefix(PrefixToken::Lonely),
                 LexToken::And,
                 LexToken::Not,
                 LexToken::Conditional(ConditionalToken::Facing),
@@ -188,7 +200,7 @@ mod tests {
     fn parse_keywords_only() {
         // Line breaks are not significant here, since this test filters them out
         let string = "all empty eat fear follow has is make mimic play 
-        down left move right text up you and not facing near on without";
+        down left move right text up you idle lonely and not facing near on without";
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
