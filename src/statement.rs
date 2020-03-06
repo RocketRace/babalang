@@ -8,17 +8,17 @@ pub enum Target {
 
 #[derive(Clone, Debug)]
 pub struct Statement {
-    prefix: Option<PrefixToken>,
-    prefix_sign: Option<bool>,
-    subject: NounToken,
-    major_cond_type: Option<ConditionalToken>,
-    major_cond_sign: Option<bool>,
-    major_cond_targets: Vec<Target>,
-    action_type: VerbToken,
-    action_targets: Option<Vec<Target>>,
-    action_target: Option<Target>,
-    action_signs: Option<Vec<bool>>,
-    action_sign: Option<bool>
+    pub prefix: Option<PrefixToken>,
+    pub prefix_sign: Option<bool>,
+    pub subject: NounToken,
+    pub cond_type: Option<ConditionalToken>,
+    pub cond_sign: Option<bool>,
+    pub cond_targets: Vec<Target>,
+    pub action_type: VerbToken,
+    pub action_targets: Option<Vec<Target>>,
+    pub action_target: Option<Target>,
+    pub action_signs: Option<Vec<bool>>,
+    pub action_sign: bool
 }
 
 // Adds a statement to the stream
@@ -27,9 +27,9 @@ pub fn append_statement(
     prefix: &Option<PrefixToken>,
     prefix_sign: &Option<bool>,
     subject: &NounToken, 
-    major_cond_type: &Option<ConditionalToken>,
-    major_cond_sign: &Option<bool>,
-    major_cond_targets: Option<&[Target]>,
+    cond_type: &Option<ConditionalToken>,
+    cond_sign: &Option<bool>,
+    cond_targets: Option<&[Target]>,
     action_type: &VerbToken,
     action_targets: &[Target],
     action_signs: &[bool],
@@ -45,44 +45,44 @@ pub fn append_statement(
                 //
             }
             else {
-                // TODO split into 'targets' and 'target'
+                let one = i - start_index == 0;
                 let statement = Statement {
                     prefix: *prefix,
                     prefix_sign: *prefix_sign,
                     subject: *subject,
-                    major_cond_type: *major_cond_type,
-                    major_cond_sign: *major_cond_sign,
-                    major_cond_targets: match major_cond_targets {
+                    cond_type: *cond_type,
+                    cond_sign: *cond_sign,
+                    cond_targets: match cond_targets {
                         Some(v) => v.to_vec(),
                         None => Vec::new()
                     },
                     action_type: *action_type,
-                    action_targets: Some(action_targets[start_index..i].to_vec()),
-                    action_target: None,
-                    action_signs: Some(action_signs.to_vec()),
-                    action_sign: None,
+                    action_targets: if one {None} else {Some(action_targets[start_index..i].to_vec())},
+                    action_target: if one {Some(action_targets[start_index])} else {None},
+                    action_signs: if one {None} else {Some(action_signs.to_vec())},
+                    action_sign: if one {action_signs[0]} else {false},
                 };
                 out.push(statement);
                 start_index = i;
             }
         }
         if start_index != total {
-            // TODO split into 'targets' and 'target'
+            let one = total - start_index == 0;
             let statement = Statement {
                 prefix: *prefix,
                 prefix_sign: *prefix_sign,
                 subject: *subject,
-                major_cond_type: *major_cond_type,
-                major_cond_sign: *major_cond_sign,
-                major_cond_targets: match major_cond_targets {
+                cond_type: *cond_type,
+                cond_sign: *cond_sign,
+                cond_targets: match cond_targets {
                     Some(v) => v.to_vec(),
                     None => Vec::new()
                 },
                 action_type: *action_type,
-                action_targets: Some(action_targets[start_index..].to_vec()),
-                action_target: None,
-                action_signs: Some(action_signs.to_vec()),
-                action_sign: None
+                action_targets: if one {None} else {Some(action_targets[start_index..].to_vec())},
+                action_target: if one {Some(action_targets[start_index])} else {None},
+                action_signs: if one {None} else {Some(action_signs.to_vec())},
+                action_sign: if one {action_signs[0]} else {false},
             };
             out.push(statement);
         }
@@ -90,15 +90,14 @@ pub fn append_statement(
     else {
         // For verbs other than IS, each AND X is guaranteed
         // to be a separate instruction.
-        // TODO split into 'targets' and 'target'
         for (i, target) in action_targets.iter().enumerate() {
             let statement = Statement {
                 prefix: *prefix,
                 prefix_sign: *prefix_sign,
                 subject: *subject,
-                major_cond_type: *major_cond_type,
-                major_cond_sign: *major_cond_sign,
-                major_cond_targets: match major_cond_targets {
+                cond_type: *cond_type,
+                cond_sign: *cond_sign,
+                cond_targets: match cond_targets {
                     Some(v) => v.to_vec(),
                     None => Vec::new()
                 },
@@ -106,7 +105,7 @@ pub fn append_statement(
                 action_targets: None,
                 action_target: Some(*target),
                 action_signs: None,
-                action_sign: Some(action_signs[i])
+                action_sign: action_signs[i]
             };
             out.push(statement);
         }

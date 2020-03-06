@@ -1,8 +1,13 @@
 mod error_handler;
+
+mod token;
 mod lexer;
+
 mod statement;
 mod statement_parser;
-mod token;
+
+mod instruction;
+mod ast;
 
 use std::env;
 
@@ -14,7 +19,7 @@ fn main() -> std::io::Result<()> {
     let file_path = match args.next() {
         Some(x) => x,
         None => {
-            error_handler::throw_error(
+            error_handler::throw_error_str(
                 error_handler::ErrorType::FileError,
                 "File not provided."
             );
@@ -29,6 +34,10 @@ fn main() -> std::io::Result<()> {
     // A vector of Statements (e.g. BABA IS YOU)
     let statements = statement_parser::parse(&tokens);
     println!("Successfully parsed program into statements.");
+
+    let ast = ast::parse(&statements);
+    println!("Successfully parsed statements into an AST.");
+    println!("{:?}", ast);
 
     // Done
     Ok(())

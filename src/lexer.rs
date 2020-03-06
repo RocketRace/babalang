@@ -35,7 +35,7 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
         Err(_) => {
             throw_error(
                 ErrorType::FileError, 
-                &format!("Could not open file at `{}`", path)
+                format!("Could not open file at `{}`", path)
             );
             panic!() // necessary for match arms to match
         }
@@ -83,7 +83,7 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
                     else {
                         throw_error(
                             ErrorType::LexerError,
-                            &format!("Failed to parse input: {:?}", &word)
+                            format!("Failed to parse input: {:?}", &word)
                         );
                     };
                     word_start = i + 1;
@@ -100,7 +100,7 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
         else {
             throw_error(
                 ErrorType::LexerError,
-                &format!("Failed to parse input: {:?}", &word)
+                format!("Failed to parse input: {:?}", &word)
             );
         };
     }

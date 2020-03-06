@@ -5,6 +5,8 @@ use std::collections::HashMap;
 pub enum NounToken {
     All,
     Empty,
+    Level,
+    Image,
     Identifier(usize)
 }
 
@@ -28,7 +30,8 @@ pub enum PropertyToken {
     Up,
     Down,
     Left,
-    Right
+    Right,
+    Fall,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -77,6 +80,8 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             // NounToken keywords
             "all" => LexToken::Noun(NounToken::All),
             "empty" => LexToken::Noun(NounToken::Empty),
+            "level" => LexToken::Noun(NounToken::Level),
+            "image" => LexToken::Noun(NounToken::Image),
             // Verb keywords
             "eat" => LexToken::Verb(VerbToken::Eat),
             "fear" => LexToken::Verb(VerbToken::Fear),
@@ -88,6 +93,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "play" => LexToken::Verb(VerbToken::Play),
             // Property keywords
             "down" => LexToken::Property(PropertyToken::Down),
+            "fall" => LexToken::Property(PropertyToken::Fall),
             "left" => LexToken::Property(PropertyToken::Left),
             "move" => LexToken::Property(PropertyToken::Move),
             "right" => LexToken::Property(PropertyToken::Right),

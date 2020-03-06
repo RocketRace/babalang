@@ -1,6 +1,6 @@
 use crate::token::{NounToken, VerbToken, PropertyToken, PrefixToken, ConditionalToken, LexToken};
 use crate::statement::{Target, Statement, append_statement};
-use crate::error_handler::{ErrorType, throw_error};
+use crate::error_handler::{ErrorType, throw_error, throw_error_str};
 
 /// The internal state of the statement parser.
 #[derive(Debug)]
@@ -39,9 +39,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
     let mut prefix: Option<PrefixToken> = None;
     let mut prefix_sign = false;
     let mut subject: Option<NounToken> = None;
-    let mut major_cond: Option<ConditionalToken> = None;
-    let mut major_cond_sign = false;
-    let mut major_cond_targets: Vec<Target> = Vec::new();
+    let mut cond_type: Option<ConditionalToken> = None;
+    let mut cond_sign = false;
+    let mut cond_targets: Vec<Target> = Vec::new();
     let mut action_type: Option<VerbToken> = None;
     let mut action_targets: Vec<Target> = Vec::new();
     let mut action_sign = false;
@@ -68,7 +68,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Prefix or Not, got {:?}", token)
+                        format!("Expected Noun, Prefix or Not, got {:?}", token)
                     );
                 }
             },
@@ -84,7 +84,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Prefix or Not, got {:?}", token)
+                        format!("Expected Prefix or Not, got {:?}", token)
                     );
                 }
             },
@@ -96,7 +96,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token)
                     );
                 }
             },
@@ -119,16 +119,16 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     else {
                         state = ParserState::MajCond;
                     }
-                    major_cond = Some(*cond);
+                    cond_type = Some(*cond);
                 }
                 else if let LexToken::Not = token {
-                    major_cond_sign = !major_cond_sign;
+                    cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Verb, Conditional or Not, got {:?}", token)
+                        format!("Expected Verb, Conditional or Not, got {:?}", token)
                     );
                 }
             },
@@ -142,49 +142,49 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     else {
                         state = ParserState::MajCond;
                     }
-                    major_cond = Some(*cond);
+                    cond_type = Some(*cond);
                 }
                 else if let LexToken::Not = token {
                     // NOT NOT cancels itself out
-                    major_cond_sign = !major_cond_sign;
+                    cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Conditional or Not, got {:?}", token)
+                        format!("Expected Conditional or Not, got {:?}", token)
                     );
                 }
             },
             ParserState::MajCond => {
                 if let LexToken::Noun(noun) = token {
                     // Nouns and properties are wrapped with an enum due to FACING
-                    major_cond_targets.push(Target::Noun(*noun));
+                    cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token)
                     );
                 }
             },
             ParserState::MajCondFacing => {
                 if let LexToken::Noun(noun) = token {
                     // Nouns and properties are wrapped with an enum due to FACING
-                    major_cond_targets.push(Target::Noun(*noun));
+                    cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondFacingTarget;
                 }
                 else if let LexToken::Property(prop) = token {
                     // FACING accepts UP, DOWN, LEFT, RIGHT
                     match prop {
                         PropertyToken::Up | PropertyToken::Down | PropertyToken::Left | PropertyToken::Right => {
-                            major_cond_targets.push(Target::Property(*prop))
+                            cond_targets.push(Target::Property(*prop))
                         },
                         _ => {
                             throw_error(
                                 ErrorType::StatementParserError, 
-                                &format!(
+                                format!(
                                     "Property words following Facing must be Up, Down, Left or Right, not {:?}",
                                     prop
                                 )
@@ -196,7 +196,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun or Property, got {:?}", token)
+                        format!("Expected Noun or Property, got {:?}", token)
                     );
                 }
             },
@@ -216,7 +216,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Verb or And, got {:?}", token)
+                        format!("Expected Verb or And, got {:?}", token)
                     );
                 }
             },
@@ -236,36 +236,36 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Verb or And, got {:?}", token)
+                        format!("Expected Verb or And, got {:?}", token)
                     );
                 }
             },
             ParserState::CondAnd => {
                 if let LexToken::Noun(noun) = token {
-                    major_cond_targets.push(Target::Noun(*noun));
+                    cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token)
                     );
                 }
             },
             ParserState::CondFacingAnd => {
                 if let LexToken::Noun(noun) = token {
-                    major_cond_targets.push(Target::Noun(*noun));
+                    cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
                 else if let LexToken::Property(prop) = token {
                     match prop {
                         PropertyToken::Up | PropertyToken::Down | PropertyToken::Left | PropertyToken::Right => {
-                            major_cond_targets.push(Target::Property(*prop))
+                            cond_targets.push(Target::Property(*prop))
                         },
                         _ => {
                             throw_error(
                                 ErrorType::StatementParserError, 
-                                &format!(
+                                format!(
                                     "Property words following Facing must be Up, Down, Left or Right, not {:?}",
                                     prop
                                 )
@@ -277,7 +277,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun or Property got {:?}", token)
+                        format!("Expected Noun or Property got {:?}", token)
                     );
                 }
             },
@@ -294,7 +294,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun or Not, got {:?}", token)
+                        format!("Expected Noun or Not, got {:?}", token)
                     );
                 }
             },
@@ -316,7 +316,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Property, Noun or Not, got {:?}", token)
+                        format!("Expected Property, Noun or Not, got {:?}", token)
                     );
                 }
             },
@@ -328,17 +328,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
@@ -353,17 +353,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
@@ -374,24 +374,24 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, And, Prefix or Not, got {:?}", token)
+                        format!("Expected Noun, And, Prefix or Not, got {:?}", token)
                     );
                 }
             },
@@ -403,17 +403,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
@@ -428,17 +428,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
@@ -449,24 +449,24 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_targets.clear();
                     action_signs.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, And, Prefix, or Not, got {:?}", token)
+                        format!("Expected Noun, And, Prefix, or Not, got {:?}", token)
                     );
                 }
             },
@@ -487,9 +487,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -506,7 +506,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Not or Verb, got {:?}", token)
+                        format!("Expected Noun, Not or Verb, got {:?}", token)
                     );
                 }
             },
@@ -532,9 +532,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -548,7 +548,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Property, Not or Verb, got {:?}", token)
+                        format!("Expected Noun, Property, Not or Verb, got {:?}", token)
                     );
                 }
             },
@@ -566,7 +566,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun or Not, got {:?}", token)
+                        format!("Expected Noun or Not, got {:?}", token)
                     );
                 }
             },
@@ -589,7 +589,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Propery or Not, got {:?}", token)
+                        format!("Expected Noun, Propery or Not, got {:?}", token)
                     );
                 }
             },
@@ -605,9 +605,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
@@ -617,8 +617,8 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     // overriden by new statements.
                     action_signs.clear();
                     action_targets.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     state = ParserState::Blank;
                 }
                 else if let LexToken::Property(prop) = token {
@@ -629,17 +629,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                         &prefix,
                         &Some(prefix_sign),
                         &subject.clone().unwrap(), 
-                        &major_cond, 
-                        &Some(major_cond_sign), 
-                        Some(&major_cond_targets),
+                        &cond_type, 
+                        &Some(cond_sign), 
+                        Some(&cond_targets),
                         &action_type.unwrap(), 
                         &action_targets, 
                         &action_signs
                     );
                     action_signs.clear();
                     action_targets.clear();
-                    major_cond_targets.clear();
-                    major_cond_sign = false;
+                    cond_targets.clear();
+                    cond_sign = false;
                     state = ParserState::Blank;
                 }
                 else if let LexToken::Not = token {
@@ -649,7 +649,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        &format!("Expected Noun, Propery or Not, got {:?}", token)
+                        format!("Expected Noun, Propery or Not, got {:?}", token)
                     );
                 }
             }
@@ -669,9 +669,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 &prefix,
                 &Some(prefix_sign),
                 &subject.clone().unwrap(), 
-                &major_cond, 
-                &Some(major_cond_sign), 
-                Some(&major_cond_targets),
+                &cond_type, 
+                &Some(cond_sign), 
+                Some(&cond_targets),
                 &action_type.unwrap(), 
                 &action_targets, 
                 &action_signs
@@ -684,9 +684,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 &prefix,
                 &Some(prefix_sign),
                 &subject.clone().unwrap(), 
-                &major_cond, 
-                &Some(major_cond_sign), 
-                Some(&major_cond_targets),
+                &cond_type, 
+                &Some(cond_sign), 
+                Some(&cond_targets),
                 &action_type.unwrap(), 
                 &action_targets, 
                 &action_signs
@@ -694,7 +694,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
         },
         _ => {
             // EOF occurred during some other random state
-            throw_error(
+            throw_error_str(
                 ErrorType::StatementParserError,
                 "Unexpected EOF during statement parsing"
             )
