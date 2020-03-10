@@ -1,3 +1,4 @@
+use std::process::exit;
 /// Dictates the source of the error.
 #[derive(Debug)]
 pub enum ErrorType {
@@ -5,6 +6,7 @@ pub enum ErrorType {
     LexerError,
     StatementParserError,
     InstructionParserError,
+    InstructionValidationError,
 }
 
 /// Throws an exception and panics the current thread.
@@ -16,7 +18,7 @@ pub enum ErrorType {
 /// * `error_message` - The message to display on panic.
 pub fn throw_error_str(error_type: ErrorType, error_message: &str) {
     println!("{:?}: {}", error_type, error_message);
-    panic!();
+    exit(1);
 }
 
 /// Throws an exception and panics the current thread.
@@ -28,5 +30,5 @@ pub fn throw_error_str(error_type: ErrorType, error_message: &str) {
 /// * `error_message` - The message to display on panic.
 pub fn throw_error(error_type: ErrorType, error_message: String) {
     println!("{:?}: {}", error_type, error_message);
-    panic!();
+    exit(1);
 }

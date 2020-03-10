@@ -14,9 +14,7 @@ use std::env;
 /// Babalang interpreter
 fn main() -> std::io::Result<()> {
     // Get path of source file
-    let mut args = env::args();
-    let _program_path = args.next().unwrap();
-    let file_path = match args.next() {
+    let file_path = match env::args().skip(1).next() {
         Some(x) => x,
         None => {
             error_handler::throw_error_str(
@@ -35,7 +33,7 @@ fn main() -> std::io::Result<()> {
     let statements = statement_parser::parse(&tokens);
     println!("Successfully parsed program into statements.");
 
-    let ast = ast::parse(&statements);
+    let ast = ast::parse(&statements, None);
     println!("Successfully parsed statements into an AST.");
     println!("{:?}", ast);
 

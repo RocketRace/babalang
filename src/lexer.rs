@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 use std::collections::HashMap;
 
-use crate::token::{LexToken, parse};
+use crate::token::{Token, parse};
 use crate::error_handler::{ErrorType, throw_error};
 
 /// The simple internal state of the lexer.
@@ -25,11 +25,11 @@ enum State {
 /// 
 /// Returns a tuple containing:
 /// 
-/// * `Vec<LexToken>` - The tokens parsed from the file.
+/// * `Vec<Token>` - The tokens parsed from the file.
 /// 
 /// * `HashMap<String, usize>` - A mapping between identifiers (e.g. "baba")
 /// and their corresponding IDs.
-pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
+pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
     let mut file = match File::open(path) {
         Ok(f) => f,
         Err(_) => {
@@ -44,7 +44,7 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
 
-    let mut out: Vec<LexToken> = Vec::new();
+    let mut out: Vec<Token> = Vec::new();
     let mut identifiers: HashMap<String, usize> = HashMap::new();
     let mut state = State::Separator;
     let mut word_start = 0;
@@ -113,7 +113,7 @@ pub fn tokenize(path: &str) -> (Vec<LexToken>, HashMap<String, usize>) {
 #[cfg(test)]
 mod tests {
     use crate::lexer::tokenize;
-    use crate::token::{LexToken, NounToken, VerbToken, PropertyToken, ConditionalToken};
+    use crate::token::{Token, Noun, Verb, Property, Conditional};
 
     #[test]
     fn tokenize_alnum() {
@@ -123,25 +123,25 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Noun(NounToken::Identifier(2)),
-                LexToken::Noun(NounToken::Identifier(3)),
-                LexToken::Noun(NounToken::Identifier(4)),
-                LexToken::Noun(NounToken::Identifier(5))
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Identifier(2)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(4)),
+                Token::Noun(Noun::Identifier(5))
             ]
         )
     }

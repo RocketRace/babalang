@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 // Valid tokens
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum NounToken {
+pub enum Noun {
     All,
     Empty,
     Level,
@@ -11,7 +11,7 @@ pub enum NounToken {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum VerbToken {
+pub enum Verb {
     Eat,
     Fear,
     Follow,
@@ -23,41 +23,49 @@ pub enum VerbToken {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PropertyToken {
+pub enum Property {
+    // Primitives
     You,
-    Move,
+    Group,
+    Tele,
+    // Exit scope
+    Done,
+    // Print
     Text,
+    // YOU
+    Move,
+    Fall,
     Up,
     Down,
     Left,
     Right,
-    Fall,
+    // GROUP
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PrefixToken {
+pub enum Prefix {
     Idle,
     Lonely
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ConditionalToken {
+pub enum Conditional {
     On,
     Near,
     Facing,
     Without
 }
 
-/// Every valid Baba token is a subset of LexToken.
+/// Every valid Baba token is a subset of Token.
 #[derive(Debug, PartialEq, Clone)]
-pub enum LexToken {
-    Noun(NounToken),
-    Verb(VerbToken),
-    Property(PropertyToken),
-    Prefix(PrefixToken),
+pub enum Token {
+    Noun(Noun),
+    Verb(Verb),
+    Property(Property),
+    Prefix(Prefix),
     Not,
     And,
-    Conditional(ConditionalToken)
+    Conditional(Conditional)
 }
 
 /// Parses a char slice into the associated token. Returns None if the slice is empty.
@@ -69,7 +77,7 @@ pub enum LexToken {
 /// * `buffer` - A character slice to parse the token from.
 /// 
 /// * `identifiers` - A HashMap that associates each unique token identifer to an usize.
-pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> Option<LexToken> {
+pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> Option<Token> {
     if buffer.len() == 0 {
         None
     }
@@ -77,41 +85,44 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
         let raw = std::str::from_utf8(buffer).unwrap();
         let id: &str = &raw.to_ascii_lowercase(); // Language is case independent
         let token = match id {
-            // NounToken keywords
-            "all" => LexToken::Noun(NounToken::All),
-            "empty" => LexToken::Noun(NounToken::Empty),
-            "level" => LexToken::Noun(NounToken::Level),
-            "image" => LexToken::Noun(NounToken::Image),
+            // Noun keywords
+            "all" => Token::Noun(Noun::All),
+            "empty" => Token::Noun(Noun::Empty),
+            "level" => Token::Noun(Noun::Level),
+            "image" => Token::Noun(Noun::Image),
             // Verb keywords
-            "eat" => LexToken::Verb(VerbToken::Eat),
-            "fear" => LexToken::Verb(VerbToken::Fear),
-            "follow" => LexToken::Verb(VerbToken::Follow),
-            "has" => LexToken::Verb(VerbToken::Has),
-            "is" => LexToken::Verb(VerbToken::Is),
-            "make" => LexToken::Verb(VerbToken::Make),
-            "mimic" => LexToken::Verb(VerbToken::Mimic),
-            "play" => LexToken::Verb(VerbToken::Play),
+            "eat" => Token::Verb(Verb::Eat),
+            "fear" => Token::Verb(Verb::Fear),
+            "follow" => Token::Verb(Verb::Follow),
+            "has" => Token::Verb(Verb::Has),
+            "is" => Token::Verb(Verb::Is),
+            "make" => Token::Verb(Verb::Make),
+            "mimic" => Token::Verb(Verb::Mimic),
+            "play" => Token::Verb(Verb::Play),
             // Property keywords
-            "down" => LexToken::Property(PropertyToken::Down),
-            "fall" => LexToken::Property(PropertyToken::Fall),
-            "left" => LexToken::Property(PropertyToken::Left),
-            "move" => LexToken::Property(PropertyToken::Move),
-            "right" => LexToken::Property(PropertyToken::Right),
-            "text" => LexToken::Property(PropertyToken::Text),
-            "up" => LexToken::Property(PropertyToken::Up),
-            "you" => LexToken::Property(PropertyToken::You),
+            "you" => Token::Property(Property::You),
+            "group" => Token::Property(Property::Group),
+            "tele" => Token::Property(Property::Tele),
+            "text" => Token::Property(Property::Text),
+            "done" => Token::Property(Property::Done),
+            "move" => Token::Property(Property::Move),
+            "fall" => Token::Property(Property::Fall),
+            "right" => Token::Property(Property::Right),
+            "up" => Token::Property(Property::Up),
+            "left" => Token::Property(Property::Left),
+            "down" => Token::Property(Property::Down),
             // Prefix keywords 
-            "idle" => LexToken::Prefix(PrefixToken::Idle),
-            "lonely" => LexToken::Prefix(PrefixToken::Lonely),
+            "idle" => Token::Prefix(Prefix::Idle),
+            "lonely" => Token::Prefix(Prefix::Lonely),
             // "And"
-            "and" => LexToken::And,
+            "and" => Token::And,
             // "Not"
-            "not" => LexToken::Not,
+            "not" => Token::Not,
             // "Conditional" keywords
-            "facing" => LexToken::Conditional(ConditionalToken::Facing),
-            "near" => LexToken::Conditional(ConditionalToken::Near),
-            "on" => LexToken::Conditional(ConditionalToken::On),
-            "without" => LexToken::Conditional(ConditionalToken::Without),
+            "facing" => Token::Conditional(Conditional::Facing),
+            "near" => Token::Conditional(Conditional::Near),
+            "on" => Token::Conditional(Conditional::On),
+            "without" => Token::Conditional(Conditional::Without),
             // Everything else (identifiers)
             _ => {
                 // Lazily hashes a string, returning an identifier (usize)
@@ -127,7 +138,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
                     },
                 };
 
-                LexToken::Noun(NounToken::Identifier(hash))
+                Token::Noun(Noun::Identifier(hash))
             }
         };
         Some(token)
@@ -137,7 +148,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
 /// Token parsing tests
 #[cfg(test)]
 mod tests {
-    use crate::token::{parse, LexToken, NounToken, VerbToken, PropertyToken, PrefixToken, ConditionalToken};
+    use crate::token::{parse, Token, Noun, Verb, Property, Prefix, Conditional};
     use std::collections::HashMap;
     #[test]
     fn parse_keywords_all() {
@@ -147,37 +158,37 @@ mod tests {
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| 
+        let tokens: Vec<Token> = words.iter().map(|&x| 
             parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
         
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::All),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Verb(VerbToken::Eat),
-                LexToken::Verb(VerbToken::Fear),
-                LexToken::Verb(VerbToken::Follow),
-                LexToken::Verb(VerbToken::Has),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Make),
-                LexToken::Verb(VerbToken::Mimic),
-                LexToken::Verb(VerbToken::Play),
-                LexToken::Property(PropertyToken::Down),
-                LexToken::Property(PropertyToken::Left),
-                LexToken::Property(PropertyToken::Move),
-                LexToken::Property(PropertyToken::Right),
-                LexToken::Property(PropertyToken::Text),
-                LexToken::Property(PropertyToken::Up),
-                LexToken::Property(PropertyToken::You),
-                LexToken::Prefix(PrefixToken::Idle),
-                LexToken::Prefix(PrefixToken::Lonely),
-                LexToken::And,
-                LexToken::Not,
-                LexToken::Conditional(ConditionalToken::Facing),
-                LexToken::Conditional(ConditionalToken::Near),
-                LexToken::Conditional(ConditionalToken::On),
-                LexToken::Conditional(ConditionalToken::Without),
+                Token::Noun(Noun::All),
+                Token::Noun(Noun::Empty),
+                Token::Verb(Verb::Eat),
+                Token::Verb(Verb::Fear),
+                Token::Verb(Verb::Follow),
+                Token::Verb(Verb::Has),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Make),
+                Token::Verb(Verb::Mimic),
+                Token::Verb(Verb::Play),
+                Token::Property(Property::Down),
+                Token::Property(Property::Left),
+                Token::Property(Property::Move),
+                Token::Property(Property::Right),
+                Token::Property(Property::Text),
+                Token::Property(Property::Up),
+                Token::Property(Property::You),
+                Token::Prefix(Prefix::Idle),
+                Token::Prefix(Prefix::Lonely),
+                Token::And,
+                Token::Not,
+                Token::Conditional(Conditional::Facing),
+                Token::Conditional(Conditional::Near),
+                Token::Conditional(Conditional::On),
+                Token::Conditional(Conditional::Without),
             ]
         )
     }
@@ -187,18 +198,18 @@ mod tests {
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
 
         assert_eq!(
             tokens,
             vec![
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Is)
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is)
             ]
         )
     }
@@ -210,7 +221,7 @@ mod tests {
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let _tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let _s: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
         
         // None of the keywords should be parsed as identifiers
         assert_eq!(identifiers.len(), 0)
@@ -221,26 +232,26 @@ mod tests {
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
         
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::All),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Verb(VerbToken::Eat),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::And,
-                LexToken::And,
-                LexToken::Not,
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Property(PropertyToken::Text),
-                LexToken::Property(PropertyToken::Up),
-                LexToken::Property(PropertyToken::You),
-                LexToken::And,
-                LexToken::Not,
-                LexToken::Noun(NounToken::All)
+                Token::Noun(Noun::All),
+                Token::Noun(Noun::Empty),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Eat),
+                Token::Noun(Noun::Empty),
+                Token::And,
+                Token::And,
+                Token::Not,
+                Token::Verb(Verb::Is),
+                Token::Property(Property::Text),
+                Token::Property(Property::Up),
+                Token::Property(Property::You),
+                Token::And,
+                Token::Not,
+                Token::Noun(Noun::All)
             ]
         )
     }
@@ -250,19 +261,19 @@ mod tests {
 
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
 
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(2)),
-                LexToken::Noun(NounToken::Identifier(3)),
-                LexToken::Noun(NounToken::Identifier(4)),
-                LexToken::Noun(NounToken::Identifier(5)),
-                LexToken::Noun(NounToken::Identifier(6)),
-                LexToken::Noun(NounToken::Identifier(7))
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(2)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(4)),
+                Token::Noun(Noun::Identifier(5)),
+                Token::Noun(Noun::Identifier(6)),
+                Token::Noun(Noun::Identifier(7))
             ]
         )
     }
@@ -272,19 +283,19 @@ mod tests {
 
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
 
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(0))
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(0))
             ]
         )
     }
@@ -294,19 +305,19 @@ mod tests {
 
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
 
         assert_eq!(
             tokens,
             vec![
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Identifier(2)),
-                LexToken::Noun(NounToken::Identifier(3)),
-                LexToken::Noun(NounToken::Identifier(2)),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(0))
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Identifier(2)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(2)),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(0))
             ]
         )
     }
@@ -317,25 +328,25 @@ mod tests {
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
-        let tokens: Vec<LexToken> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
+        let tokens: Vec<Token> = words.iter().map(|&x| parse(x.as_bytes(), &mut identifiers).unwrap()).collect();
 
         assert_eq!(tokens, 
             vec![
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::And,
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Not,
-                LexToken::Conditional(ConditionalToken::On),
-                LexToken::Noun(NounToken::Identifier(2)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::And,
-                LexToken::Noun(NounToken::Identifier(3)),
-                LexToken::Noun(NounToken::Identifier(4)),
-                LexToken::Verb(VerbToken::Is),
-                LexToken::Noun(NounToken::Identifier(1)),
-                LexToken::Noun(NounToken::Identifier(0)),
-                LexToken::Noun(NounToken::Empty),
-                LexToken::Noun(NounToken::Identifier(5))
+                Token::Noun(Noun::Identifier(0)),
+                Token::And,
+                Token::Noun(Noun::Identifier(1)),
+                Token::Not,
+                Token::Conditional(Conditional::On),
+                Token::Noun(Noun::Identifier(2)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::And,
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(4)),
+                Token::Verb(Verb::Is),
+                Token::Noun(Noun::Identifier(1)),
+                Token::Noun(Noun::Identifier(0)),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Identifier(5))
             ]
         )
     }
