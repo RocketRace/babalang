@@ -1,4 +1,4 @@
-use crate::token::{NounToken, VerbToken, PropertyToken, PrefixToken, ConditionalToken, LexToken};
+use crate::token::{Noun, Verb, Property, Prefix, Conditional, Token};
 use crate::statement::{Target, Statement, append_statement};
 use crate::error_handler::{ErrorType, throw_error, throw_error_str};
 
@@ -31,18 +31,18 @@ enum ParserState {
 /// # Return
 /// 
 /// Returns a `Vec` of `Statement` objects.
-pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
+pub fn parse(tokens: &[Token]) -> Vec<Statement> {
     let mut out = Vec::new();
     let mut state = ParserState::Blank;
 
     // Used to construct statements part-by-part
-    let mut prefix: Option<PrefixToken> = None;
+    let mut prefix: Option<Prefix> = None;
     let mut prefix_sign = false;
-    let mut subject: Option<NounToken> = None;
-    let mut cond_type: Option<ConditionalToken> = None;
+    let mut subject: Option<Noun> = None;
+    let mut cond_type: Option<Conditional> = None;
     let mut cond_sign = false;
     let mut cond_targets: Vec<Target> = Vec::new();
-    let mut action_type: Option<VerbToken> = None;
+    let mut action_type: Option<Verb> = None;
     let mut action_targets: Vec<Target> = Vec::new();
     let mut action_sign = false;
     let mut action_signs: Vec<bool> = Vec::new();
@@ -53,15 +53,15 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
         match state {
             ParserState::Blank => {
                 // Expect statements to begin with a noun
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
-                else if let LexToken::Prefix(pref) = token {
+                else if let Token::Prefix(pref) = token {
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
@@ -73,11 +73,11 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::ExpectsPrefix => {
-                if let LexToken::Prefix(pref) = token {
+                if let Token::Prefix(pref) = token {
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
@@ -89,7 +89,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::Prefix => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
@@ -101,8 +101,8 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::Subject => {
-                if let LexToken::Verb(verb) = token {
-                    if let VerbToken::Is = verb {
+                if let Token::Verb(verb) = token {
+                    if let Verb::Is = verb {
                         state = ParserState::MajIs;
                     }
                     else {
@@ -111,9 +111,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     action_type = Some(*verb);
                     
                 }
-                else if let LexToken::Conditional(cond) = token {
+                else if let Token::Conditional(cond) = token {
                     // Facing
-                    if let ConditionalToken::Facing = cond {
+                    if let Conditional::Facing = cond {
                         state = ParserState::MajCondFacing;
                     }
                     else {
@@ -121,7 +121,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     }
                     cond_type = Some(*cond);
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
                 }
@@ -133,9 +133,9 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::ExpectsMajCond => {
-                if let LexToken::Conditional(cond) = token {
+                if let Token::Conditional(cond) = token {
                     // FACING can be followed by a directional property as well as nouns
-                    if let ConditionalToken::Facing = cond {
+                    if let Conditional::Facing = cond {
                         state = ParserState::MajCondFacing;
                     }
                     // Other conditionals are followed by nouns
@@ -144,7 +144,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     }
                     cond_type = Some(*cond);
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     // NOT NOT cancels itself out
                     cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
@@ -157,7 +157,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajCond => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     // Nouns and properties are wrapped with an enum due to FACING
                     cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
@@ -170,15 +170,15 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajCondFacing => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     // Nouns and properties are wrapped with an enum due to FACING
                     cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondFacingTarget;
                 }
-                else if let LexToken::Property(prop) = token {
+                else if let Token::Property(prop) = token {
                     // FACING accepts UP, DOWN, LEFT, RIGHT
                     match prop {
-                        PropertyToken::Up | PropertyToken::Down | PropertyToken::Left | PropertyToken::Right => {
+                        Property::Up | Property::Down | Property::Left | Property::Right => {
                             cond_targets.push(Target::Property(*prop))
                         },
                         _ => {
@@ -201,8 +201,8 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajCondTarget => {
-                if let LexToken::Verb(verb) = token {
-                    if let VerbToken::Is = verb {
+                if let Token::Verb(verb) = token {
+                    if let Verb::Is = verb {
                         state = ParserState::MajIs;
                     }
                     else {
@@ -210,7 +210,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     }
                     action_type = Some(*verb);
                 }
-                else if let LexToken::And = token {
+                else if let Token::And = token {
                     state = ParserState::CondAnd;
                 }
                 else {
@@ -221,8 +221,8 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajCondFacingTarget => {
-                if let LexToken::Verb(verb) = token {
-                    if let VerbToken::Is = verb {
+                if let Token::Verb(verb) = token {
+                    if let Verb::Is = verb {
                         state = ParserState::MajIs;
                     }
                     else {
@@ -230,7 +230,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     }
                     action_type = Some(*verb);
                 }
-                else if let LexToken::And = token {
+                else if let Token::And = token {
                     state = ParserState::CondFacingAnd;
                 }
                 else {
@@ -241,7 +241,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::CondAnd => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
@@ -253,13 +253,13 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::CondFacingAnd => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     cond_targets.push(Target::Noun(*noun));
                     state = ParserState::MajCondTarget;
                 }
-                else if let LexToken::Property(prop) = token {
+                else if let Token::Property(prop) = token {
                     match prop {
-                        PropertyToken::Up | PropertyToken::Down | PropertyToken::Left | PropertyToken::Right => {
+                        Property::Up | Property::Down | Property::Left | Property::Right => {
                             cond_targets.push(Target::Property(*prop))
                         },
                         _ => {
@@ -282,12 +282,12 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajAct => {
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajActTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::MajAct;
                 }
@@ -299,17 +299,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                 }
             },
             ParserState::MajIs => {
-                if let LexToken::Property(prop) = token {
+                if let Token::Property(prop) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Property(*prop));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Noun(noun) = token {
+                else if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::MajIs;
                 }
@@ -322,7 +322,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::MajActTarget => {
                 // Starting a new statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -337,17 +337,18 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
                 // Continue existing statement (not IS)
-                else if let LexToken::And = token {
+                else if let Token::And = token {
                     state = ParserState::ActAnd;
                 }
                 // New statement (PREFIX)
-                else if let LexToken::Prefix(pref) = token {
+                else if let Token::Prefix(pref) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -362,13 +363,14 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
                 // New statement (NOT PREFIX)
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -383,6 +385,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     prefix_sign = !prefix_sign;
@@ -397,7 +400,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::MajIsTarget => {
                 // Starting a new statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -412,17 +415,18 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
                 // Continue existing statement (IS)
-                else if let LexToken::And = token {
+                else if let Token::And = token {
                     state = ParserState::IsAnd;
                 }
                 // New statement (PREFIX)
-                else if let LexToken::Prefix(pref) = token {
+                else if let Token::Prefix(pref) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -437,13 +441,14 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
                 // New statement (NOT PREFIX)
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -458,6 +463,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     prefix_sign = !prefix_sign;
@@ -472,16 +478,16 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::ActAnd => {
                 // Prepending to an existing statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajActTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::ExpectsMajActTarget;
                 }
-                else if let LexToken::Verb(verb) = token {
+                else if let Token::Verb(verb) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -501,6 +507,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     action_type = Some(*verb);
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     state = ParserState::ExpectsMinActTarget;
                 }
                 else {
@@ -512,21 +519,21 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::IsAnd => {
                 // Prepending to an existing statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Property(prop) = token {
+                else if let Token::Property(prop) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Property(*prop));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::ExpectsMajIsTarget;
                 }
-                else if let LexToken::Verb(verb) = token {
+                else if let Token::Verb(verb) = token {
                     append_statement(
                         &mut out,
                         &prefix,
@@ -543,6 +550,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     action_type = Some(*verb);
                     action_targets.clear();
                     action_signs.clear();
+                    cond_type = None;
                     state = ParserState::ExpectsMinActTarget;
                 }
                 else {
@@ -554,12 +562,12 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::ExpectsMajActTarget => {
                 // Prepending to an existing statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajActTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::ExpectsMajActTarget;
                 }
@@ -572,17 +580,17 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             },
             ParserState::ExpectsMajIsTarget => {
                 // Prepending to an existing statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Property(prop) = token {
+                else if let Token::Property(prop) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Property(*prop));
                     state = ParserState::MajIsTarget;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::ExpectsMajIsTarget;
                 }
@@ -597,7 +605,7 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
             // it's not necessary to split this between IS and other verbs.
             ParserState::ExpectsMinActTarget => {
                 // Prepending to an existing statement
-                if let LexToken::Noun(noun) = token {
+                if let Token::Noun(noun) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Noun(*noun));
                     append_statement(
@@ -617,11 +625,12 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     // overriden by new statements.
                     action_signs.clear();
                     action_targets.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     state = ParserState::Blank;
                 }
-                else if let LexToken::Property(prop) = token {
+                else if let Token::Property(prop) = token {
                     action_signs.push(action_sign);
                     action_targets.push(Target::Property(*prop));
                     append_statement(
@@ -638,11 +647,12 @@ pub fn parse(tokens: &[LexToken]) -> Vec<Statement> {
                     );
                     action_signs.clear();
                     action_targets.clear();
+                    cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
                     state = ParserState::Blank;
                 }
-                else if let LexToken::Not = token {
+                else if let Token::Not = token {
                     action_sign = !action_sign;
                     state = ParserState::ExpectsMinActTarget;
                 }
