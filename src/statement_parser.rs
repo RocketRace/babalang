@@ -340,6 +340,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
@@ -366,6 +367,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
@@ -388,6 +390,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
@@ -418,6 +421,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
                 }
@@ -444,6 +448,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
                 }
@@ -466,6 +471,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
@@ -628,6 +634,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     state = ParserState::Blank;
                 }
                 else if let Token::Property(prop) = token {
@@ -650,6 +657,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    action_sign = false;
                     state = ParserState::Blank;
                 }
                 else if let Token::Not = token {

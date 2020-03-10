@@ -36,7 +36,7 @@ pub fn parse<'a>(statements: &'a [Statement], scope: Option<usize>) -> Vec<Instr
                                                         throw_error(
                                                             ErrorType::InstructionParserError, 
                                                             format!(
-                                                                "Cannot exit out of {:?} when in global scope.",
+                                                                "Cannot exit out of {:?} when in global scope",
                                                                 statement.subject 
                                                             )
                                                         )
@@ -44,9 +44,18 @@ pub fn parse<'a>(statements: &'a [Statement], scope: Option<usize>) -> Vec<Instr
                                                 }
                                             },
                                             Noun::All => {
-                                                // ..., ALL IS DONE
                                                 if let None = scope {
-                                                    return out;
+                                                    // ALL IS DONE
+                                                    if let false = statement.action_sign {
+                                                        return out;
+                                                    }
+                                                    // ALL IS NOT DONE
+                                                    else {
+                                                        throw_error_str(
+                                                            ErrorType::InstructionValidationError, 
+                                                            "Cannot call ALL IS DONE"    
+                                                        )
+                                                    }
                                                 }
                                                 else {
                                                     throw_error_str(
@@ -66,13 +75,14 @@ pub fn parse<'a>(statements: &'a [Statement], scope: Option<usize>) -> Vec<Instr
                                     _ => {
                                         throw_error_str(
                                             ErrorType::InstructionValidationError, 
-                                            "Cannot call IS DONE conditionally."    
+                                            "Cannot call IS DONE conditionally"    
                                         )
                                     }
                                 }
                             },
                             // Initialize primitive objects
                             Property::You => out.push(validate("InitYou", statement)),
+                            Property::Group => out.push(validate("InitGroup", statement)),
                             Property::Tele => {
                                 if let Instruction::PartialTele(id) = validate("InitTele", statement) {
                                     let inner = parse(&statements[i + 1..], Some(id));
@@ -87,33 +97,58 @@ pub fn parse<'a>(statements: &'a [Statement], scope: Option<usize>) -> Vec<Instr
                             Property::Text => out.push(validate("Text", statement)),
                             // YOU instructions
                             Property::Move => out.push(validate("YouMove", statement)),
+                            Property::Turn => out.push(validate("YouTurn", statement)),
                             Property::Fall => out.push(validate("YouFall", statement)),
+                            Property::More => out.push(validate("YouMore", statement)),
                             Property::Right => out.push(validate("YouRight", statement)),
                             Property::Up => out.push(validate("YouUp", statement)),
                             Property::Left => out.push(validate("YouLeft", statement)),
                             Property::Down => out.push(validate("YouDown", statement)),
+                            Property::Shift => out.push(validate("GroupShift", statement)),
+                            Property::Push => out.push(validate("GroupPush", statement)),
+                            Property::Sink => out.push(validate("GroupSink", statement)),
+                            Property::Swap => out.push(validate("GroupSwap", statement)),
                             _ => {
                                 throw_error(
                                     ErrorType::InstructionParserError, 
-                                    format!("Invalid property `{:?}` provided to IS.", prop)
+                                    format!("Invalid property `{:?}` provided to IS", prop)
                                 );
                             }
                         }
                     }
                     else if let Target::Noun(_) = target {
-                        println!("{:?}", statement);
                         out.push(validate("IsValue", statement));
                     }
                 }
                 else if let Some(_) = &statement.action_targets {
-                    println!("{:?}", statement);
                     out.push(validate("YouSum", statement));
+                }
+            },
+            Verb::Has => {
+                if let Some(target) = statement.action_target {
+                    if let Target::Noun(_) = target {
+                        out.push(validate("HasValue", statement));
+                    }
+                }
+            },
+            Verb::Fear => {
+                if let Some(target) = statement.action_target {
+                    if let Target::Noun(_) = target {
+                        out.push(validate("FearTele", statement));
+                    }
+                }
+            },
+            Verb::Eat => {
+                if let Some(target) = statement.action_target {
+                    if let Target::Noun(_) = target {
+                        out.push(validate("EatTele", statement));
+                    }
                 }
             },
             _ => {
                 throw_error(
                     ErrorType::InstructionParserError, 
-                    format!("Invalid verb `{:?}` provided to instruction parser.", action_type)
+                    format!("Invalid verb `{:?}` provided to instruction parser", action_type)
                 );
             }
         }

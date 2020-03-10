@@ -34,12 +34,18 @@ pub enum Property {
     Text,
     // YOU
     Move,
+    Turn,
     Fall,
+    More,
     Up,
     Down,
     Left,
     Right,
     // GROUP
+    Shift,
+    Push,
+    Sink,
+    Swap
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -106,11 +112,17 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "text" => Token::Property(Property::Text),
             "done" => Token::Property(Property::Done),
             "move" => Token::Property(Property::Move),
+            "turn" => Token::Property(Property::Turn),
             "fall" => Token::Property(Property::Fall),
+            "more" => Token::Property(Property::More),
             "right" => Token::Property(Property::Right),
             "up" => Token::Property(Property::Up),
             "left" => Token::Property(Property::Left),
             "down" => Token::Property(Property::Down),
+            "shift" => Token::Property(Property::Shift),
+            "push" => Token::Property(Property::Push),
+            "sink" => Token::Property(Property::Sink),
+            "swap" => Token::Property(Property::Swap),
             // Prefix keywords 
             "idle" => Token::Prefix(Prefix::Idle),
             "lonely" => Token::Prefix(Prefix::Lonely),

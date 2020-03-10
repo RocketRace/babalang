@@ -19,7 +19,7 @@ fn main() -> std::io::Result<()> {
         None => {
             error_handler::throw_error_str(
                 error_handler::ErrorType::FileError,
-                "File not provided."
+                "File not provided"
             );
             panic!() // necessary for the match arms to match 
         }
@@ -27,14 +27,14 @@ fn main() -> std::io::Result<()> {
 
     // Tokenize the source file and return a vector of tokens
     let (tokens, identifiers) = lexer::tokenize(&file_path);
-    println!("Successfully tokenized program at `{}`.", file_path);
+    println!("Successfully tokenized program at `{}`", file_path);
 
     // A vector of Statements (e.g. BABA IS YOU)
     let statements = statement_parser::parse(&tokens);
-    println!("Successfully parsed program into statements.");
+    println!("Successfully parsed program into statements");
 
     let ast = ast::parse(&statements, None);
-    println!("Successfully parsed statements into an AST.");
+    println!("Successfully parsed statements into an AST");
     println!("{:?}", ast);
 
     // Done
