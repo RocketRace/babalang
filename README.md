@@ -15,12 +15,16 @@ Ensure you have Rust on your machine.
 
 After cloning into this repository, run:
 
-`rustc main.rs babalang`
+`rustc src/main.rs -Oo babalang`
+
+or if you have Cargo, 
+
+`cargo build --release`
 
 ## Running
 
 After creating a file with Babalang source code, run:
 
-`./babalang path_to_source_file`
+`babalang path_to_source_file`
 
- to execute your program.
+to execute your program.
