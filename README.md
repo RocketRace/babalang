@@ -1,4 +1,4 @@
-# Babalang
+# What is Babalang?
 
 Babalang is an object-oriented, Turing-complete esoteric programming language inspired by the rule 
 system within the (also Turing-complete) indie game Baba Is You. The language is based around statements 
@@ -6,3 +6,21 @@ system within the (also Turing-complete) indie game Baba Is You. The language is
 The language supports variables, loops, functions, structs, and basic IO operations. 
 
 A full language specification is available at the respective [esolangs.org page](https://esolangs.org/wiki/Babalang).
+
+# The Babalang interpreter
+
+## Compiling
+
+Ensure you have Rust on your machine.
+
+After cloning into this repository, run:
+
+`rustc main.rs babalang`
+
+## Running
+
+After creating a file with Babalang source code, run:
+
+`./babalang path_to_source_file`
+
+ to execute your program.
