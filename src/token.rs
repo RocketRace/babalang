@@ -28,10 +28,16 @@ pub enum Property {
     You,
     Group,
     Tele,
+    // Static
+    Float,
     // Exit scope
     Done,
-    // Print
+    // I/O
     Text,
+    Word,
+    // Program
+    Win,
+    Defeat,
     // YOU
     Move,
     Turn,
@@ -43,9 +49,10 @@ pub enum Property {
     Right,
     // GROUP
     Shift,
-    Push,
     Sink,
-    Swap
+    Swap,
+    // LEVEL
+    Power,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -83,7 +90,7 @@ pub enum Token {
 /// * `buffer` - A character slice to parse the token from.
 /// 
 /// * `identifiers` - A HashMap that associates each unique token identifer to an usize.
-pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> Option<Token> {
+pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<usize, String>) -> Option<Token> {
     if buffer.len() == 0 {
         None
     }
@@ -106,11 +113,21 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "mimic" => Token::Verb(Verb::Mimic),
             "play" => Token::Verb(Verb::Play),
             // Property keywords
+            // - Initializers
             "you" => Token::Property(Property::You),
             "group" => Token::Property(Property::Group),
             "tele" => Token::Property(Property::Tele),
+            // - Static
+            "float" => Token::Property(Property::Float),
+            // - I/O
             "text" => Token::Property(Property::Text),
+            "word" => Token::Property(Property::Word),
+            // - Program
+            "win" => Token::Property(Property::Win),
+            "defeat" => Token::Property(Property::Defeat),
+            // - Other
             "done" => Token::Property(Property::Done),
+            // - You
             "move" => Token::Property(Property::Move),
             "turn" => Token::Property(Property::Turn),
             "fall" => Token::Property(Property::Fall),
@@ -119,10 +136,12 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "up" => Token::Property(Property::Up),
             "left" => Token::Property(Property::Left),
             "down" => Token::Property(Property::Down),
+            // - Group
             "shift" => Token::Property(Property::Shift),
-            "push" => Token::Property(Property::Push),
             "sink" => Token::Property(Property::Sink),
             "swap" => Token::Property(Property::Swap),
+            // - Level
+            "power" => Token::Property(Property::Power),
             // Prefix keywords 
             "idle" => Token::Prefix(Prefix::Idle),
             "lonely" => Token::Prefix(Prefix::Lonely),
@@ -137,20 +156,25 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<String, usize>) -> 
             "without" => Token::Conditional(Conditional::Without),
             // Everything else (identifiers)
             _ => {
-                // Lazily hashes a string, returning an identifier (usize)
-                let hash = match identifiers.get(id) {
-                    // For existing strings
-                    Some(n) => *n,
+                let mut unique = true;
+                let mut existing_id = 0;
+                for (value, identifier) in identifiers.iter() {
+                    if &id == &identifier {
+                        existing_id = *value;
+                        unique = false;
+                        break;
+                    }
+                }
+                if unique {
+                    let new_id = identifiers.len();
                     // For new strings, the unique identifier is just the length 
-                    // of the set, i.e. each identifier is one greater than the previous.
-                    None => {
-                        let new_id = identifiers.len();
-                        identifiers.insert(String::from(id), new_id);
-                        new_id
-                    },
-                };
-
-                Token::Noun(Noun::Identifier(hash))
+                    // of the set, i.e. each identifier is one grer than the previous.
+                    identifiers.insert(new_id, id.to_string());
+                    Token::Noun(Noun::Identifier(new_id))
+                }
+                else {
+                    Token::Noun(Noun::Identifier(existing_id))
+                }
             }
         };
         Some(token)
@@ -165,7 +189,7 @@ mod tests {
     #[test]
     fn parse_keywords_all() {
         // Line breaks are not significant here, since this test filters them out
-        let string = "all empty eat fear follow has is make mimic play 
+        let string = "all empty  fear follow has is make mimic play 
         down left move right text up you idle lonely and not facing near on without";
         
         let mut identifiers = HashMap::new();
@@ -178,7 +202,6 @@ mod tests {
             vec![
                 Token::Noun(Noun::All),
                 Token::Noun(Noun::Empty),
-                Token::Verb(Verb::Eat),
                 Token::Verb(Verb::Fear),
                 Token::Verb(Verb::Follow),
                 Token::Verb(Verb::Has),
@@ -228,7 +251,7 @@ mod tests {
     #[test]
     fn parse_keywords_only() {
         // Line breaks are not significant here, since this test filters them out
-        let string = "all empty eat fear follow has is make mimic play 
+        let string = "all empty fear follow has is make mimic play 
         down left move right text up you idle lonely and not facing near on without";
         
         let mut identifiers = HashMap::new();
@@ -240,7 +263,7 @@ mod tests {
     }
     #[test]
     fn parse_keywords_mixed() {
-        let string = "all empty is eat empty and and not is text up you and not all";
+        let string = "all empty is  empty and and not is text up you and not all";
         
         let mut identifiers = HashMap::new();
         let words: Vec<&str> = string.split_ascii_whitespace().collect();
@@ -252,7 +275,6 @@ mod tests {
                 Token::Noun(Noun::All),
                 Token::Noun(Noun::Empty),
                 Token::Verb(Verb::Is),
-                Token::Verb(Verb::Eat),
                 Token::Noun(Noun::Empty),
                 Token::And,
                 Token::And,

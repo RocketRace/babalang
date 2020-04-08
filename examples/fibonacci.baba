@@ -1,0 +1,236 @@
+// This function prints each digit of the digits of an input's ASCII representation.
+// This is optional, but makes the result much tidier.
+ord is level and has input
+
+    // No magic numbers! Every literal has to be constructed :/
+
+    // ASCII strings of each digit
+    0_str is you and move and more and move and more and more and more and more
+    1_str is 0_str and move
+    2_str is 1_str and move
+    3_str is 2_str and move
+    4_str is 3_str and move
+    5_str is 4_str and move
+    6_str is 5_str and move
+    7_str is 6_str and move
+    8_str is 7_str and move
+    9_str is 8_str and move
+
+    // Numbers for conditionals 
+    1 is you and move
+    2 is 1 and 1
+    3 is 2 and 1
+    4 is 2 and 2
+    5 is 3 and 2
+    6 is 3 and 3
+    7 is 4 and 3
+    8 is 4 and 4
+    9 is 5 and 4
+
+    10 is 5 and 5
+    20 is 10 and 10
+    30 is 20 and 10
+    40 is 20 and 20
+    50 is 30 and 20
+    60 is 30 and 30
+    70 is 40 and 30
+    80 is 40 and 40
+    90 is 50 and 40
+
+    100 is 50 and 50
+    200 is 100 and 100
+
+    // Boolean to determine whether we should strip zeros or print them
+    print_zero is you
+
+    // Ensure our input value is facing right (to make FACING conditionals work as we intend)
+    input is right
+
+    // Match over the 100s digit
+    match_100s is tele
+        // input >= 200 => Print "2"
+        case_200 is tele
+            input facing 200 fear case_200
+            2_str is text
+            input is input and not 200
+            print_zero is move
+            input fear match_100s
+        case_200 is done
+        // input >= 100 => Print "1"
+        case_100 is tele
+            input facing 100 fear case_100
+            1_str is text
+            input is input and not 100
+            print_zero is move
+            input fear match_100s
+        case_100 is done
+        // Don't print anything
+        input fear match_100s
+    match_100s is done
+
+    // Match over the 10s digit
+    match_10s is tele
+        // input >= 90 => Print "9"
+        case_90 is tele
+            input facing 90 fear case_90
+            9_str is text
+            input is input and not 90
+            print_zero is move
+            input fear match_10s
+        case_90 is done
+        // input >= 80 => Print "8"
+        case_80 is tele
+            input facing 80 fear case_80
+            8_str is text
+            input is input and not 80
+            print_zero is move
+            input fear match_10s
+        case_80 is done
+        // input >= 70 => Print "7"
+        case_70 is tele
+            input facing 70 fear case_70
+            7_str is text
+            input is input and not 70
+            print_zero is move
+            input fear match_10s
+        case_70 is done
+        // input >= 60 => Print "6"
+        case_60 is tele
+            input facing 60 fear case_60
+            6_str is text
+            input is input and not 60
+            print_zero is move
+            input fear match_10s
+        case_60 is done
+        // input >= 50 => Print "5"
+        case_50 is tele
+            input facing 50 fear case_50
+            5_str is text
+            input is input and not 50
+            print_zero is move
+            input fear match_10s
+        case_50 is done
+        // input >= 40 => Print "4"
+        case_40 is tele
+            input facing 40 fear case_40
+            4_str is text
+            input is input and not 40
+            print_zero is move
+            input fear match_10s
+        case_40 is done
+        // input >= 30 => Print "3"
+        case_30 is tele
+            input facing 30 fear case_30
+            3_str is text
+            input is input and not 30
+            print_zero is move
+            input fear match_10s
+        case_30 is done
+        // input >= 20 => Print "2"
+        case_20 is tele
+            input facing 20 fear case_20
+            2_str is text
+            input is input and not 20
+            print_zero is move
+            input fear match_10s
+        case_20 is done
+        // input >= 10 => Print "1"
+        case_10 is tele
+            input facing 10 fear case_10
+            1_str is text
+            input is input and not 10
+            input fear match_10s
+        case_10 is done
+        // Print "0" if print_zero is set
+        lonely print_zero fear match_10s
+        0_str is text
+        input fear match_10s
+    match_10s is done
+
+    // Match over the 1s digit
+    match_1s is tele
+        // input >= 9 => Print "9"
+        case_9 is tele
+            input facing 9 fear case_9
+            9_str is text
+            input fear match_1s
+        case_9 is done
+        // input >= 8 => Print "8"
+        case_8 is tele
+            input facing 8 fear case_8
+            8_str is text
+            input fear match_1s
+        case_8 is done
+        // input >= 7 => Print "7"
+        case_7 is tele
+            input facing 7 fear case_7
+            7_str is text
+            input fear match_1s
+        case_7 is done
+        // input >= 6 => Print "6"
+        case_6 is tele
+            input facing 6 fear case_6
+            6_str is text
+            input fear match_1s
+        case_6 is done
+        // input >= 5 => Print "5"
+        case_5 is tele
+            input facing 5 fear case_5
+            5_str is text
+            input fear match_1s
+        case_5 is done
+        // input >= 4 => Print "4"
+        case_4 is tele
+            input facing 4 fear case_4
+            4_str is text
+            input fear match_1s
+        case_4 is done
+        // input >= 3 => Print "3"
+        case_3 is tele
+            input facing 3 fear case_3
+            3_str is text
+            input fear match_1s
+        case_3 is done
+        // input >= 2 => Print "2"
+        case_2 is tele
+            input facing 2 fear case_2
+            2_str is text
+            input fear match_1s
+        case_2 is done
+        // input >= 1 => Print "1"
+        case_1 is tele
+            input facing 1 fear case_1
+            1_str is text
+            input fear match_1s
+        case_1 is done
+        0_str is text
+        input fear match_1s
+    match_1s is done
+    // ord implicitly returns EMPTY
+ord is done
+
+// Line feed
+LF is you and move and more and more and move and more
+
+// The raw fib program :)
+baba is you
+keke is you and move
+me is you
+
+// Print only the first 13 values (all values less than 255)
+i is you and move and more and move and more and more and move
+loop is tele
+    // Only loop 
+    lonely i fear loop
+    i is not move
+
+    // Print the digits
+    out is ord
+    out has me and is power
+    LF is text
+
+    // Update the values
+    me is baba and keke
+    baba is keke
+    keke is me
+loop is done

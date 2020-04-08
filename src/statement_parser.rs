@@ -2,6 +2,8 @@ use crate::token::{Noun, Verb, Property, Prefix, Conditional, Token};
 use crate::statement::{Target, Statement, append_statement};
 use crate::error_handler::{ErrorType, throw_error, throw_error_str};
 
+use std::collections::HashMap;
+
 /// The internal state of the statement parser.
 #[derive(Debug)]
 enum ParserState {
@@ -31,7 +33,7 @@ enum ParserState {
 /// # Return
 /// 
 /// Returns a `Vec` of `Statement` objects.
-pub fn parse(tokens: &[Token]) -> Vec<Statement> {
+pub fn parse(tokens: &[Token], identifiers: &HashMap<usize, String>) -> Vec<Statement> {
     let mut out = Vec::new();
     let mut state = ParserState::Blank;
 
@@ -68,7 +70,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, Prefix or Not, got {:?}", token)
+                        format!("Expected Noun, Prefix or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -81,10 +84,18 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
                 }
+                else if let Token::Noun(Noun::Identifier(id)) = token {
+                    throw_error(
+                        ErrorType::StatementParserError,
+                        format!("Expected Prefix or Not, got {:?}", token),
+                        Some((&[*id], identifiers))
+                    );
+                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Prefix or Not, got {:?}", token)
+                        format!("Expected Prefix or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -96,7 +107,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -125,10 +137,18 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
                 }
+                else if let Token::Noun(Noun::Identifier(id)) = token {
+                    throw_error(
+                        ErrorType::StatementParserError,
+                        format!("Expected Verb, Conditional or Not, got {:?}", token),
+                        Some((&[*id], identifiers))
+                    );
+                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Verb, Conditional or Not, got {:?}", token)
+                        format!("Expected Verb, Conditional or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -149,10 +169,18 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_sign = !cond_sign;
                     state = ParserState::ExpectsMajCond;
                 }
+                else if let Token::Noun(Noun::Identifier(id)) = token {
+                    throw_error(
+                        ErrorType::StatementParserError,
+                        format!("Expected Conditional or Not, got {:?}", token),
+                        Some((&[*id], identifiers))
+                    );
+                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Conditional or Not, got {:?}", token)
+                        format!("Expected Conditional or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -165,7 +193,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -187,7 +216,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                                 format!(
                                     "Property words following Facing must be Up, Down, Left or Right, not {:?}",
                                     prop
-                                )
+                                ),
+                                None
                             )
                         }
                     }
@@ -196,7 +226,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun or Property, got {:?}", token)
+                        format!("Expected Noun or Property, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -213,10 +244,18 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else if let Token::And = token {
                     state = ParserState::CondAnd;
                 }
+                else if let Token::Noun(Noun::Identifier(id)) = token {
+                    throw_error(
+                        ErrorType::StatementParserError,
+                        format!("Expected Verb or And, got {:?}", token),
+                        Some((&[*id], identifiers))
+                    );
+                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Verb or And, got {:?}", token)
+                        format!("Expected Verb or And, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -233,10 +272,18 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else if let Token::And = token {
                     state = ParserState::CondFacingAnd;
                 }
+                else if let Token::Noun(Noun::Identifier(id)) = token {
+                    throw_error(
+                        ErrorType::StatementParserError,
+                        format!("Expected Verb or And, got {:?}", token),
+                        Some((&[*id], identifiers))
+                    );
+                }
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Verb or And, got {:?}", token)
+                        format!("Expected Verb or And, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -248,7 +295,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, got {:?}", token)
+                        format!("Expected Noun, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -268,7 +316,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                                 format!(
                                     "Property words following Facing must be Up, Down, Left or Right, not {:?}",
                                     prop
-                                )
+                                ),
+                                None
                             )
                         }
                     }
@@ -277,7 +326,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun or Property got {:?}", token)
+                        format!("Expected Noun or Property got {:?}", token),
+                        None
                     );
                 }
             },
@@ -294,7 +344,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun or Not, got {:?}", token)
+                        format!("Expected Noun or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -316,7 +367,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Property, Noun or Not, got {:?}", token)
+                        format!("Expected Property, Noun or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -340,6 +392,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
@@ -367,6 +421,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix_sign = false;
                     action_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
@@ -390,6 +445,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
@@ -397,7 +454,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, And, Prefix or Not, got {:?}", token)
+                        format!("Expected Noun, And, Prefix or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -421,6 +479,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     subject = Some(*noun);
                     state = ParserState::Subject;
@@ -448,6 +508,7 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix_sign = false;
                     action_sign = false;
                     prefix = Some(*pref);
                     state = ParserState::Prefix;
@@ -471,6 +532,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     prefix_sign = !prefix_sign;
                     state = ParserState::ExpectsPrefix;
@@ -478,7 +541,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, And, Prefix, or Not, got {:?}", token)
+                        format!("Expected Noun, And, Prefix, or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -519,7 +583,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, Not or Verb, got {:?}", token)
+                        format!("Expected Noun, Not or Verb, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -562,7 +627,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, Property, Not or Verb, got {:?}", token)
+                        format!("Expected Noun, Property, Not or Verb, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -580,7 +646,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun or Not, got {:?}", token)
+                        format!("Expected Noun or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -603,7 +670,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, Propery or Not, got {:?}", token)
+                        format!("Expected Noun, Propery or Not, got {:?}", token),
+                        None
                     );
                 }
             },
@@ -634,6 +702,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     state = ParserState::Blank;
                 }
@@ -657,6 +727,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                     cond_type = None;
                     cond_targets.clear();
                     cond_sign = false;
+                    prefix = None;
+                    prefix_sign = false;
                     action_sign = false;
                     state = ParserState::Blank;
                 }
@@ -667,7 +739,8 @@ pub fn parse(tokens: &[Token]) -> Vec<Statement> {
                 else {
                     throw_error(
                         ErrorType::StatementParserError,
-                        format!("Expected Noun, Propery or Not, got {:?}", token)
+                        format!("Expected Noun, Propery or Not, got {:?}", token),
+                        None
                     );
                 }
             }

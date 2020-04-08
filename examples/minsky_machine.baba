@@ -1,0 +1,18 @@
+// This program trivially simulates a Minsky machine with three registers. 
+
+// Any amount of registers can be declared; two were chosen for brevity.
+register_A is group
+register_B is group
+register_C is group
+
+// Registers can be incremented like so:
+register_A has empty
+
+// The following branches if the register is 0 (i.e. has no elements),
+// and decrements the register otherwise:
+branch is loop
+    not lonely register_A fear loop
+    // These lines will only execute if the register is 0.
+branch is done
+// Decrement the register
+register_A is sink

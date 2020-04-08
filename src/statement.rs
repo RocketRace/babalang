@@ -1,6 +1,6 @@
 use crate::token::{Noun, Property, Prefix, Verb, Conditional};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Target {
     Noun(Noun),
     Property(Property)
@@ -44,110 +44,113 @@ pub fn append_statement(
         let mut start_index = 0;
         let total = action_targets.len();
         for (i, target) in action_targets.iter().enumerate() {
-            if let Target::Property(_) = target {
-                match i - start_index {
-                    0 => {
-                        // Previously there was either nothing or a property
-                        out.push(Statement {
-                            prefix: *prefix,
-                            prefix_sign: *prefix_sign,
-                            subject: *subject,
-                            cond_type: *cond_type,
-                            cond_sign: *cond_sign,
-                            cond_targets: match cond_targets {
-                                Some(v) => v.to_vec(),
-                                None => Vec::new()
-                            },
-                            action_type: *action_type,
-                            action_targets: None,
-                            action_target: Some(*target),
-                            action_signs: None,
-                            action_sign: action_signs[i],
-                        });
-                    },
-                    1 => {
-                        // Previously ignored single noun in AND chain
-                        out.push(Statement {
-                            prefix: *prefix,
-                            prefix_sign: *prefix_sign,
-                            subject: *subject,
-                            cond_type: *cond_type,
-                            cond_sign: *cond_sign,
-                            cond_targets: match cond_targets {
-                                Some(v) => v.to_vec(),
-                                None => Vec::new()
-                            },
-                            action_type: *action_type,
-                            action_targets: None,
-                            action_target: Some(action_targets[i - 1]),
-                            action_signs: None,
-                            action_sign: action_signs[i - 1],
-                        });
-                        // Current property
-                        out.push(Statement {
-                            prefix: *prefix,
-                            prefix_sign: *prefix_sign,
-                            subject: *subject,
-                            cond_type: *cond_type,
-                            cond_sign: *cond_sign,
-                            cond_targets: match cond_targets {
-                                Some(v) => v.to_vec(),
-                                None => Vec::new()
-                            },
-                            action_type: *action_type,
-                            action_targets: None,
-                            action_target: Some(*target),
-                            action_signs: None,
-                            action_sign: action_signs[i],
-                        });
-                    },
-                    k if k > 1 => {
-                        // Collect all nouns, discard properties 
-                        // (there should never be properties here in the first place)
-                        let mut targets = Vec::new();
-                        for target in action_targets[i - k..i].iter() {
-                            if let Target::Noun(noun) = target {
-                                targets.push(*noun);
+            match target {
+                Target::Noun(n) if matches!(n, Noun::Identifier(_)) | matches!(n, Noun::All) => (),
+                _ => {
+                    match i - start_index {
+                        0 => {
+                            // Previously there was either nothing or a property
+                            out.push(Statement {
+                                prefix: *prefix,
+                                prefix_sign: *prefix_sign,
+                                subject: *subject,
+                                cond_type: *cond_type,
+                                cond_sign: *cond_sign,
+                                cond_targets: match cond_targets {
+                                    Some(v) => v.to_vec(),
+                                    None => Vec::new()
+                                },
+                                action_type: *action_type,
+                                action_targets: None,
+                                action_target: Some(*target),
+                                action_signs: None,
+                                action_sign: action_signs[i],
+                            });
+                        },
+                        1 => {
+                            // Previously ignored single noun in AND chain
+                            out.push(Statement {
+                                prefix: *prefix,
+                                prefix_sign: *prefix_sign,
+                                subject: *subject,
+                                cond_type: *cond_type,
+                                cond_sign: *cond_sign,
+                                cond_targets: match cond_targets {
+                                    Some(v) => v.to_vec(),
+                                    None => Vec::new()
+                                },
+                                action_type: *action_type,
+                                action_targets: None,
+                                action_target: Some(action_targets[i - 1]),
+                                action_signs: None,
+                                action_sign: action_signs[i - 1],
+                            });
+                            // Current property
+                            out.push(Statement {
+                                prefix: *prefix,
+                                prefix_sign: *prefix_sign,
+                                subject: *subject,
+                                cond_type: *cond_type,
+                                cond_sign: *cond_sign,
+                                cond_targets: match cond_targets {
+                                    Some(v) => v.to_vec(),
+                                    None => Vec::new()
+                                },
+                                action_type: *action_type,
+                                action_targets: None,
+                                action_target: Some(*target),
+                                action_signs: None,
+                                action_sign: action_signs[i],
+                            });
+                        },
+                        k if k > 1 => {
+                            // Collect all nouns, discard properties 
+                            // (there should never be properties here in the first place)
+                            let mut targets = Vec::new();
+                            for target in action_targets[i - k..i].iter() {
+                                if let Target::Noun(noun) = target {
+                                    targets.push(*noun);
+                                }
                             }
+                            // Previously ignored *multiple* nouns in AND chain
+                            out.push(Statement {
+                                prefix: *prefix,
+                                prefix_sign: *prefix_sign,
+                                subject: *subject,
+                                cond_type: *cond_type,
+                                cond_sign: *cond_sign,
+                                cond_targets: match cond_targets {
+                                    Some(v) => v.to_vec(),
+                                    None => Vec::new()
+                                },
+                                action_type: *action_type,
+                                action_targets: Some(targets),
+                                action_target: None,
+                                action_signs: Some(action_signs[i - k..i].to_vec()),
+                                action_sign: false,
+                            });
+                            // Current property
+                            out.push(Statement {
+                                prefix: *prefix,
+                                prefix_sign: *prefix_sign,
+                                subject: *subject,
+                                cond_type: *cond_type,
+                                cond_sign: *cond_sign,
+                                cond_targets: match cond_targets {
+                                    Some(v) => v.to_vec(),
+                                    None => Vec::new()
+                                },
+                                action_type: *action_type,
+                                action_targets: None,
+                                action_target: Some(*target),
+                                action_signs: None,
+                                action_sign: action_signs[i],
+                            });
                         }
-                        // Previously ignored *multiple* nouns in AND chain
-                        out.push(Statement {
-                            prefix: *prefix,
-                            prefix_sign: *prefix_sign,
-                            subject: *subject,
-                            cond_type: *cond_type,
-                            cond_sign: *cond_sign,
-                            cond_targets: match cond_targets {
-                                Some(v) => v.to_vec(),
-                                None => Vec::new()
-                            },
-                            action_type: *action_type,
-                            action_targets: Some(targets),
-                            action_target: None,
-                            action_signs: Some(action_signs[i - k..i].to_vec()),
-                            action_sign: false,
-                        });
-                        // Current property
-                        out.push(Statement {
-                            prefix: *prefix,
-                            prefix_sign: *prefix_sign,
-                            subject: *subject,
-                            cond_type: *cond_type,
-                            cond_sign: *cond_sign,
-                            cond_targets: match cond_targets {
-                                Some(v) => v.to_vec(),
-                                None => Vec::new()
-                            },
-                            action_type: *action_type,
-                            action_targets: None,
-                            action_target: Some(*target),
-                            action_signs: None,
-                            action_sign: action_signs[i],
-                        });
+                        _ => ()
                     }
-                    _ => ()
+                    start_index = i + 1;
                 }
-                start_index = i + 1;
             }
         }
         match total - start_index {

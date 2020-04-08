@@ -1,13 +1,12 @@
 mod error_handler;
-
 mod token;
 mod lexer;
-
 mod statement;
 mod statement_parser;
-
 mod instruction;
 mod ast;
+mod interpreter;
+mod object;
 
 use std::env;
 
@@ -27,15 +26,18 @@ fn main() -> std::io::Result<()> {
 
     // Tokenize the source file and return a vector of tokens
     let (tokens, identifiers) = lexer::tokenize(&file_path);
-    println!("Successfully tokenized program at `{}`", file_path);
+    // println!("Successfully tokenized program at `{}`", file_path);
 
     // A vector of Statements (e.g. BABA IS YOU)
-    let statements = statement_parser::parse(&tokens);
-    println!("Successfully parsed program into statements");
+    let statements = statement_parser::parse(&tokens, &identifiers);
+    // println!("Successfully parsed program into statements");
 
-    let ast = ast::parse(&statements, None);
-    println!("Successfully parsed statements into an AST");
-    println!("{:?}", ast);
+    // A vector of Instructions (e.g. [initialize BABA as YOU])
+    let ast = ast::parse(&statements, &identifiers);
+    // println!("Successfully parsed statements into an AST");
+    
+    interpreter::exec(&ast, &identifiers);
+    // println!("Successfully executed AST");
 
     // Done
     Ok(())

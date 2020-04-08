@@ -10,7 +10,9 @@ use crate::error_handler::{ErrorType, throw_error};
 /// Dictates whether the lexer is reading a word or a separator.
 enum State {
     Word,
-    Separator
+    Separator,
+    MaybeComment,
+    Comment
 }
 
 /// Tokenizes a Baba source file from the given path.
@@ -29,13 +31,14 @@ enum State {
 /// 
 /// * `HashMap<String, usize>` - A mapping between identifiers (e.g. "baba")
 /// and their corresponding IDs.
-pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
+pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<usize, String>) {
     let mut file = match File::open(path) {
         Ok(f) => f,
         Err(_) => {
             throw_error(
                 ErrorType::FileError, 
-                format!("Could not open file at `{}`", path)
+                format!("Could not open file at `{}`", path),
+                None
             );
             panic!() // necessary for match arms to match
         }
@@ -45,7 +48,10 @@ pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
     file.read_to_end(&mut buffer).unwrap();
 
     let mut out: Vec<Token> = Vec::new();
-    let mut identifiers: HashMap<String, usize> = HashMap::new();
+    let mut identifiers: HashMap<usize, String> = HashMap::new();
+    identifiers.insert(0, "empty".to_string());
+    identifiers.insert(1, "level".to_string());
+    identifiers.insert(2, "image".to_string());
     let mut state = State::Separator;
     let mut word_start = 0;
 
@@ -60,6 +66,10 @@ pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
                 // Begin new word
                 if c.is_ascii_alphanumeric() || c == '_' {
                     state = State::Word;
+                }
+                else if c == '/' {
+                    state = State::MaybeComment;
+                    word_start += 1;
                 }
                 else {
                     // The current word won't start here yet
@@ -83,10 +93,35 @@ pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
                     else {
                         throw_error(
                             ErrorType::LexerError,
-                            format!("Failed to parse input: {:?}", &word)
+                            format!("Failed to parse input: {:?}", &word),
+                            None
                         );
                     };
                     word_start = i + 1;
+                }
+            },
+            // This might be a comment? ("//")
+            State::MaybeComment => {
+                if c.is_ascii_alphanumeric() || c == '_' {
+                    state = State::Word;
+                }
+                else if c == '/' {
+                    state = State::Comment;
+                    word_start += 1;
+                }
+                else {
+                    // The current word won't start here yet
+                    word_start += 1;
+                }
+            }
+            // This certainly is a comment. ("//")
+            State::Comment => {
+                if c == '\n' || c == '\r' {
+                    state = State::Separator;
+                    word_start += 1;
+                }
+                else {
+                    word_start += 1;
                 }
             }
         }
@@ -100,7 +135,8 @@ pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
         else {
             throw_error(
                 ErrorType::LexerError,
-                format!("Failed to parse input: {:?}", &word)
+                format!("Failed to parse input: {:?}", &word),
+                None
             );
         };
     }
@@ -113,35 +149,35 @@ pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<String, usize>) {
 #[cfg(test)]
 mod tests {
     use crate::lexer::tokenize;
-    use crate::token::{Token, Noun, Verb, Property, Conditional};
+    use crate::token::{Token, Noun, Verb};
 
     #[test]
     fn tokenize_alnum() {
         let path = "tests/tokenize_alnum.baba";
-        let (tokens, identifiers) = tokenize(path);
+        let (tokens, _identifiers) = tokenize(path);
 
         assert_eq!(
             tokens,
             vec![
-                Token::Noun(Noun::Identifier(0)),
-                Token::Noun(Noun::Identifier(0)),
-                Token::Noun(Noun::Identifier(0)),
-                Token::Noun(Noun::Identifier(0)),
-                Token::Verb(Verb::Is),
-                Token::Verb(Verb::Is),
-                Token::Verb(Verb::Is),
-                Token::Verb(Verb::Is),
-                Token::Noun(Noun::Identifier(1)),
-                Token::Noun(Noun::Identifier(1)),
-                Token::Noun(Noun::Identifier(1)),
-                Token::Noun(Noun::Identifier(1)),
-                Token::Noun(Noun::Empty),
-                Token::Noun(Noun::Empty),
-                Token::Noun(Noun::Empty),
-                Token::Noun(Noun::Identifier(2)),
                 Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Noun(Noun::Identifier(3)),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
+                Token::Verb(Verb::Is),
                 Token::Noun(Noun::Identifier(4)),
-                Token::Noun(Noun::Identifier(5))
+                Token::Noun(Noun::Identifier(4)),
+                Token::Noun(Noun::Identifier(4)),
+                Token::Noun(Noun::Identifier(4)),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Empty),
+                Token::Noun(Noun::Identifier(5)),
+                Token::Noun(Noun::Identifier(6)),
+                Token::Noun(Noun::Identifier(7)),
+                Token::Noun(Noun::Identifier(8))
             ]
         )
     }

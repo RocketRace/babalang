@@ -2,18 +2,22 @@ use crate::error_handler::{throw_error, throw_error_str, ErrorType};
 use crate::statement::{Statement, Target};
 use crate::token::{Noun, Conditional, Prefix};
 
+use std::collections::HashMap;
+
 /// Describes an instruction without conditions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Simple {
     // init
-    InitYou(usize),
-    InitGroup(usize),
+    InitYou(usize, bool),
+    InitGroup(usize, bool),
     // any
+    Win(usize),
+    Defeat(usize),
     Text(usize),
+    Word(usize),
     IsValue(usize, usize, bool),
-    HasValue(usize, usize),
-    FearTele(usize, usize),
-    EatTele(usize, usize),
+    MimicReference(usize, usize),
+    IsEmpty(usize),
     // you
     IsSum(usize, Vec<Noun>, Vec<bool>),
     Move(usize, bool),
@@ -35,87 +39,104 @@ pub enum Simple {
     AllDown(bool),
     // group
     Shift(usize, bool),
-    Push(usize),
     Sink(usize),
     Swap(usize),
+    // group / level
+    HasValue(usize, usize),
+    MakeValue(usize, usize),
+    // level
+    Power(usize),
+    // tele
+    FearTele(usize, usize),
+    // image
+    FollowAttribute(usize, usize),
+    EatValue(usize, usize),
 }
 
 /// Describes an instruction with some conditions.
-#[derive(Debug, Clone)]
-pub struct Complex<'a> {
-    conditions: Option<Conditions<'a>>,
-    prefix: Option<Prefixes>,
-    instruction: Simple
+/// Both `conditions` and `prefix` should typically not be None.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Complex {
+    pub conditions: Option<Conditions>,
+    pub prefix: Option<Prefixes>,
+    pub instruction: Simple
 }
 
 /// Descrives the targeted conditions for a complex instruction.
-#[derive(Debug, Copy, Clone)]
-pub struct Conditions<'a> {
-    cond_type: Conditional,
-    targets: &'a [Target],
-    sign: bool
+#[derive(Debug, Clone, PartialEq)]
+pub struct Conditions{
+    pub cond_type: Conditional,
+    pub targets: Vec<Target>,
+    pub sign: bool
 }
 
 /// Describes the non-targeted (unary) conditions for a complex instruction.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Prefixes {
-    prefix: Prefix,
-    sign: bool,
+    pub prefix: Prefix,
+    pub sign: bool,
 }
 
 /// Descibes a TELE instruction (i.e. a loop instruction).
-#[derive(Debug, Clone)]
-pub struct Tele<'a> {
-    pub instructions: Vec<Instruction<'a>>,
-    pub identifier: usize
+#[derive(Debug, Clone, PartialEq)]
+pub struct Tele {
+    pub identifier: usize,
+    pub instructions: Vec<Instruction>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Level {
+    pub float: bool,
+    pub identifier: usize,
+    pub arguments: Vec<usize>,
+    pub instructions: Vec<Instruction>
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Image {
+    pub float: bool,
+    pub identifier: usize,
+    pub attributes: Vec<usize>,
+    pub constructor: Level
 }
 
 /// Describes an instruction.
-#[derive(Debug, Clone)]
-pub enum Instruction<'a> {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Instruction {
     NoOp,
     Simple(Simple),
-    Complex(Complex<'a>),
+    Complex(Complex),
     PartialTele(usize),
-    Tele(Tele<'a>), // Loop
-    Level, // Function definition
-    Image // Class definition
+    Tele(Tele), // Loops
+    PartialLevel(usize),
+    Level(Level), // Function definition
+    PartialImage(usize),
+    Image(Image), // Class definition
+    PartialFloat(usize) // Static variables
 }
 
 /// Validates an instruction. Throws an InstructionValidationError if the attempted
 /// instruction can't be constructed from the statement.
-pub fn validate<'a>(instruction_type: &str, statement: &'a Statement) -> Instruction<'a> {
+pub fn validate<'a>(
+    instruction_type: &str, 
+    statement: &'a Statement,
+    identifiers: &HashMap<usize, String>
+) -> Instruction {
     let mut instr = Instruction::NoOp;
     match instruction_type {
-        "InitYou" => instr = generic_init(statement, "YOU", &Simple::InitYou),
-        "InitGroup" => instr = generic_init(statement, "Group", &Simple::InitGroup),
-        "InitTele" => {
-            let conds = conditions(statement);
-            if let Noun::Identifier(id) = statement.subject {
-                if let (None, None) = conds {
-                    if !statement.action_sign {
-                        instr = Instruction::PartialTele(id);
-                    }
-                    else {
-                        // NOT TELE is a no-op
-                        instr = Instruction::NoOp
-                    }
-                }
-                else {
-                    throw_error_str(
-                        ErrorType::InstructionValidationError, 
-                        "IS TELE can not be defined with conditions"
-                    )
-                }
-            }
-            else {
-                throw_error(
-                    ErrorType::InstructionValidationError, 
-                    format!("Cannot initialize {:?} as TELE", statement.subject)
-                );
-            }
-        },
-        "Text" => instr = generic_any(statement, "TEXT", &Simple::Text),
+        "InitYou" => instr = generic_init(statement, "YOU", false, &Simple::InitYou),
+        "InitGroup" => instr = generic_init(statement, "GROUP", false, &Simple::InitGroup),
+        "InitTele" => instr = generic_partial(statement, "TELE", &Instruction::PartialTele),
+        "InitLevel" => instr = generic_partial(statement, "LEVEL", &Instruction::PartialLevel),
+        "InitImage" => instr = generic_partial(statement, "IMAGE", &Instruction::PartialImage),
+        "InitFloat" => instr = generic_partial(statement, "FLOAT", &Instruction::PartialFloat),
+        "FloatYou" => instr = generic_init(statement, "YOU", true, &Simple::InitYou),
+        "FloatGroup" => instr = generic_init(statement, "GROUP", true, &Simple::InitGroup),
+        "IsText" => instr = generic_any(statement, "TEXT", &Simple::Text),
+        "IsWord" => instr = generic_any(statement, "WORD", &Simple::Word),
+        "IsWin" => instr = generic_any(statement, "WIN", &Simple::Win),
+        "IsDefeat" => instr = generic_any(statement, "DEFEAT", &Simple::Defeat),
+        "IsEmpty" => instr = generic_any(statement, "EMPTY", &Simple::IsEmpty),
         "IsValue" => {
             let conds = conditions(statement);
             if let Noun::Identifier(id) = statement.subject {
@@ -125,15 +146,77 @@ pub fn validate<'a>(instruction_type: &str, statement: &'a Statement) -> Instruc
                 }
             }
             else {
-                throw_error(
-                    ErrorType::InstructionValidationError, 
-                    format!("Cannot make {:?} {} any noun", statement.subject, "IS")
-                );
+                if let Some(noun) = statement.action_target {
+                    if let Target::Noun(Noun::Identifier(other_id)) = noun {
+                        throw_error(
+                            ErrorType::InstructionValidationError, 
+                            format!("Cannot make {:?} IS Identifier({})", statement.subject, other_id),
+                            Some((&[other_id], identifiers))
+                        );
+                    }
+                    else {
+                        throw_error(
+                            ErrorType::InstructionValidationError, 
+                            format!("Cannot make {:?} IS {:?}", statement.subject, noun),
+                            None
+                        );
+                    }
+                }
+                else {
+                    throw_error(
+                        ErrorType::InstructionValidationError, 
+                        format!("Cannot make {:?} IS any noun", statement.subject),
+                        None
+                    );
+                }
             }
         }
         "HasValue" => instr = generic_verb(statement, "HAS", &Simple::HasValue),
+        "MakeValue" => instr = generic_verb(statement, "MAKE", &Simple::MakeValue),
+        "FollowAttribute" => instr = generic_verb(statement, "FOLLOW", &Simple::FollowAttribute),
+        "EatValue" => instr = generic_verb(statement, "EAT", &Simple::EatValue),
+        "MimicReference" => {
+            let conds = conditions(statement);
+            if let Noun::Identifier(id) = statement.subject {
+                if let Some(Target::Noun(Noun::Identifier(source))) = statement.action_target {
+                    let simple = Simple::MimicReference(id, source); 
+                    instr = merge(simple, conds);
+                }
+                else {
+                    throw_error(
+                        ErrorType::InstructionValidationError, 
+                        format!("Cannot make {} MIMIC {:?}", id, statement.action_target),
+                        Some((&[id], identifiers))
+                    );
+                }
+            }
+            else {
+                if let Some(noun) = statement.action_target {
+                    if let Target::Noun(Noun::Identifier(other_id)) = noun {
+                        throw_error(
+                            ErrorType::InstructionValidationError, 
+                            format!("Cannot make {:?} MIMIC Identifier({})", statement.subject, other_id),
+                            Some((&[other_id], identifiers))
+                        );
+                    }
+                    else {
+                        throw_error(
+                            ErrorType::InstructionValidationError, 
+                            format!("Cannot make {:?} MIMIC {:?}", statement.subject, noun),
+                            None
+                        );
+                    }
+                }
+                else {
+                    throw_error(
+                        ErrorType::InstructionValidationError, 
+                        format!("Cannot make {:?} MIMIC any noun", statement.subject),
+                        None
+                    );
+                }
+            }
+        },
         "FearTele" => instr = generic_verb(statement, "FEAR", &Simple::FearTele),
-        "EatTele" => instr = generic_verb(statement, "EAT", &Simple::EatTele),
         "YouMove" => instr = generic_you(statement, "MOVE", &Simple::Move, &Simple::AllMove),
         "YouTurn" => instr = generic_you(statement, "TURN", &Simple::Turn, &Simple::AllTurn),
         "YouFall" => instr = generic_you(statement, "FALL", &Simple::Fall, &Simple::AllFall),
@@ -156,15 +239,16 @@ pub fn validate<'a>(instruction_type: &str, statement: &'a Statement) -> Instruc
             else {
                 throw_error(
                     ErrorType::InstructionValidationError, 
-                    format!("Cannot set {:?} to sum of objects", statement.subject)
+                    format!("Cannot set {:?} to sum of objects", statement.subject),
+                    None
                 );
                 Instruction::NoOp
             }
         }
         "GroupShift" => instr = generic_not(statement, "SHIFT", &Simple::Shift),
-        "GroupPush" => instr = generic_any(statement, "PUSH", &Simple::Push),
         "GroupSink" => instr = generic_any(statement, "SINK", &Simple::Sink),
         "GroupSwap" => instr = generic_any(statement, "SWAP", &Simple::Swap),
+        "LevelPower" => instr = generic_any(statement, "POWER", &Simple::Power),
         _ => {
             throw_error_str(
                 ErrorType::InstructionValidationError, 
@@ -198,7 +282,7 @@ pub fn conditions(statement: &Statement) -> (Option<Conditions>, Option<Prefixes
                 Some(Conditions {
                     cond_type: cond,
                     sign: statement.cond_sign.unwrap(),
-                    targets: &statement.cond_targets
+                    targets: statement.cond_targets.to_owned()
                 }),
                 Some(Prefixes {
                     prefix: pref,
@@ -212,7 +296,7 @@ pub fn conditions(statement: &Statement) -> (Option<Conditions>, Option<Prefixes
                 Some(Conditions {
                     cond_type: cond,
                     sign: statement.cond_sign.unwrap(),
-                    targets: &statement.cond_targets
+                    targets: statement.cond_targets.to_owned()
                 }),
                 None
             )
@@ -237,18 +321,21 @@ pub fn conditions(statement: &Statement) -> (Option<Conditions>, Option<Prefixes
 /// Merges a simple instruction with conditions into a Complex instruction.
 fn merge<'a>(
     simple: Simple,
-    conds: (Option<Conditions<'a>>, Option<Prefixes>),
-) -> Instruction<'a> {
+    conds: (Option<Conditions>, Option<Prefixes>),
+) -> Instruction {
     let (cond, prefix) = conds;
-    if let (None, None) = (cond, prefix) {
-        Instruction::Simple(simple)
-    }
-    else {
-        Instruction::Complex(Complex {
-            conditions: cond,
-            prefix: prefix,
+    match (cond, prefix) {
+        (None, None) => Instruction::Simple(simple),
+        (Some(c), p) => Instruction::Complex(Complex {
+            conditions: Some(c),
+            prefix: p,
             instruction: simple
-        })
+        }),
+        (None, p) => Instruction::Complex(Complex {
+            conditions: None,
+            prefix: p,
+            instruction: simple
+        }),
     }
 }
 
@@ -260,7 +347,7 @@ fn generic_you<'a>(
     target: &str,
     simple_factory: &dyn Fn(usize, bool) -> Simple,
     all_factory: &dyn Fn(bool) -> Simple
-) -> Instruction<'a> {
+) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
         let simple = simple_factory(id, statement.action_sign); 
@@ -273,7 +360,8 @@ fn generic_you<'a>(
     else {
         throw_error(
             ErrorType::InstructionValidationError, 
-            format!("Cannot apply {} to {:?}", target, statement.subject)
+            format!("Cannot apply {} to {:?}", target, statement.subject),
+            None
         );
         Instruction::NoOp
     }
@@ -286,7 +374,7 @@ fn generic_not<'a>(
     statement: &'a Statement,
     target: &str,
     simple_factory: &dyn Fn(usize, bool) -> Simple,
-) -> Instruction<'a> {
+) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
         let simple = simple_factory(id, statement.action_sign); 
@@ -295,7 +383,8 @@ fn generic_not<'a>(
     else {
         throw_error(
             ErrorType::InstructionValidationError, 
-            format!("Cannot apply {} to {:?}", target, statement.subject)
+            format!("Cannot apply {} to {:?}", target, statement.subject),
+            None
         );
         Instruction::NoOp
     }
@@ -307,13 +396,14 @@ fn generic_not<'a>(
 fn generic_init<'a>(
     statement: &'a Statement,
     target: &str,
-    simple_factory: &dyn Fn(usize) -> Simple,
-) -> Instruction<'a> {
+    float: bool,
+    simple_factory: &dyn Fn(usize, bool) -> Simple,
+) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
         if let (None, None) = conds {
             if !statement.action_sign {
-                Instruction::Simple(simple_factory(id))
+                Instruction::Simple(simple_factory(id, float))
             }
             else {
                 // NOT [type] is a no-op
@@ -323,7 +413,8 @@ fn generic_init<'a>(
         else {
             throw_error(
                 ErrorType::InstructionValidationError, 
-                format!("IS {} can not be defined with conditions", target)
+                format!("IS {} cannot be defined with conditions", target),
+                None
             );
             Instruction::NoOp
 
@@ -332,7 +423,46 @@ fn generic_init<'a>(
     else {
         throw_error(
             ErrorType::InstructionValidationError, 
-            format!("Cannot initialize {:?} as {}", statement.subject, target)
+            format!("Cannot initialize {:?} as {}", statement.subject, target),
+            None
+        );
+        Instruction::NoOp
+    }
+}
+
+/// Returns an INIT instruction with default parameters.
+/// 
+/// Does not allow for conditionals. NOT returns a no-op.
+fn generic_partial<'a>(
+    statement: &'a Statement,
+    target: &str,
+    partial_factory: &dyn Fn(usize) -> Instruction,
+) -> Instruction {
+    let conds = conditions(statement);
+    if let Noun::Identifier(id) = statement.subject {
+        if let (None, None) = conds {
+            if !statement.action_sign {
+                partial_factory(id)
+            }
+            else {
+                // NOT YOU/GROUP/TELE is a no-op
+                Instruction::NoOp
+            }
+        }
+        else {
+            throw_error(
+                ErrorType::InstructionValidationError, 
+                format!("IS {} cannot be called with conditions", target),
+                None
+            );
+            Instruction::NoOp
+        }
+    }
+    else {
+        throw_error(
+            ErrorType::InstructionValidationError, 
+            format!("Cannot initialize {:?} as {}", statement.subject, target),
+            None
         );
         Instruction::NoOp
     }
@@ -346,7 +476,7 @@ fn generic_any<'a>(
     statement: &'a Statement,
     target: &str,
     simple_factory: &dyn Fn(usize) -> Simple,
-) -> Instruction<'a> {
+) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
         if let false = statement.action_sign {
@@ -360,7 +490,8 @@ fn generic_any<'a>(
     else {
         throw_error(
             ErrorType::InstructionValidationError, 
-            format!("Cannot apply {} to {:?}", target, statement.subject)
+            format!("Cannot apply {} to {:?}", target, statement.subject),
+            None
         );
         Instruction::NoOp
     }
@@ -373,11 +504,19 @@ fn generic_verb<'a>(
     statement: &'a Statement,
     target: &str,
     simple_factory: &dyn Fn(usize, usize) -> Simple,
-) -> Instruction<'a> {
+) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
         if let Some(Target::Noun(Noun::Identifier(source))) = statement.action_target {
             let simple = simple_factory(id, source); 
+            merge(simple, conds)
+        }
+        else if let Some(Target::Noun(Noun::Empty)) = statement.action_target {
+            let simple = simple_factory(id, 0); 
+            merge(simple, conds)
+        }
+        else if let Some(Target::Noun(Noun::Level)) = statement.action_target {
+            let simple = simple_factory(id, 1); 
             merge(simple, conds)
         }
         else {
@@ -387,7 +526,8 @@ fn generic_verb<'a>(
     else {
         throw_error(
             ErrorType::InstructionValidationError, 
-            format!("Cannot make {:?} {} any noun", statement.subject, target)
+            format!("Cannot make {:?} {} any noun", statement.subject, target),
+            None
         );
         Instruction::NoOp
     }
