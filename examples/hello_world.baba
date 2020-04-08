@@ -1,0 +1,31 @@
+// Initialize constants
+// Even though these are numbers, the interpreter considers them variables.
+// This is important to keep in mind.
+1 is you and move 2 is 1 and 1 4 is 2 and 2 8 is 4 and 4 
+16 is 8 and 8 32 is 16 and 16 64 is 32 and 32
+
+// Initialize a stack
+hello_world is group
+
+// Initialize character with value "H" (decimal 72)
+H is 64 and 8
+
+// Initialize the rest of the characters
+e is 64 and 32 and 4 and 1
+l is 64 and 32 and 8 and 4
+// `X and not Y` stands for `X + (-Y)`
+o is 64 and 32 and 16 and not 1
+comma is 32 and 8 and 4
+sp is 32
+w is 64 and 32 and 16 and 8 and not 1
+r is 64 and 32 and 16 and 2
+d is 64 and 32 and 4
+excl is 32 and 1
+newline is 8 and 2
+
+// Push the appropriate characters to the stack
+hello_world has H and e and l and l and o and comma and sp 
+    and w and o and r and l and d and excl and newline
+
+// Print the contents of the stack
+hello_world is text and text

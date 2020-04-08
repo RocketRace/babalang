@@ -2,5 +2,4 @@
 **/*.rs.bk
 .vscode/*
 tests/
-hello_world.baba
 .DS_Store
