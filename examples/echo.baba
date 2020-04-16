@@ -1,0 +1,11 @@
+// Simple program to echo user input
+// If the input is blank, halt the program
+
+baba is group
+keke is group
+flag is tele             // Loop:
+  baba is word           // Take input
+  keke is baba and sink  // Strip newline
+  lonely keke fear flag  // Check for empty input
+  baba is text           // Print output
+flag is done
