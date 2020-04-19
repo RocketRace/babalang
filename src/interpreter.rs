@@ -517,6 +517,9 @@ fn exec_with<'a>(
                                             complete = false;
                                         }
                                     }
+                                    else {
+                                        complete = !pref.sign;
+                                    }
                                 },
                             }
                         }
