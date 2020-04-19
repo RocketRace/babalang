@@ -671,13 +671,17 @@ fn exec_simple<'a>(
             }
         },
         Simple::Win(id) => {
-            if let Some(_) = find_ref(id, locals, globals, identifiers) {
-                exit(0);
+            if let Some(obj) = find_ref(id, locals, globals, identifiers) {
+                if let Type::You(_) = obj.obj_type {
+                    exit(0);
+                }
             }
         },
         Simple::Defeat(id) => {
-            if let Some(_) = find_ref(id, locals, globals, identifiers) {
-                exit(1);
+            if let Some(obj) = find_ref(id, locals, globals, identifiers) {
+                if let Type::You(_) = obj.obj_type {
+                    exit(1);
+                }
             }
         },
         Simple::IsValue(source_id, target_id, not) => {
