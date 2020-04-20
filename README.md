@@ -11,15 +11,15 @@ A full language specification is available at the respective [esolangs.org page]
 
 ## Compiling
 
-Ensure you have Rust on your machine.
+Ensure you have Cargo installed on your machine.
 
 After cloning into this repository, run:
 
+`cargo build --release`,
+
+or alternatively, 
+
 `rustc src/main.rs -Oo babalang`
-
-or if you have Cargo, 
-
-`cargo build --release`
 
 ## Running
 
