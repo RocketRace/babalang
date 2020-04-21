@@ -31,21 +31,28 @@ enum State {
 /// 
 /// * `HashMap<String, usize>` - A mapping between identifiers (e.g. "baba")
 /// and their corresponding IDs.
-pub fn tokenize(path: &str) -> (Vec<Token>, HashMap<usize, String>) {
-    let mut file = match File::open(path) {
-        Ok(f) => f,
-        Err(_) => {
-            throw_error(
-                ErrorType::FileError, 
-                format!("Could not open file at `{}`", path),
-                None
-            );
-            panic!() // necessary for match arms to match
-        }
-    };
-
+pub fn tokenize(path: Option<String>, source: Option<&mut Vec<u8>>) -> (Vec<Token>, HashMap<usize, String>) {
     let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).unwrap();
+    
+    if let Some(p) = path {
+        let mut file = match File::open(&p) {
+            Ok(f) => f,
+            Err(_) => {
+                throw_error(
+                    ErrorType::FileError, 
+                    format!("Could not open file at `{}`", p),
+                    None
+                );
+                panic!() // necessary for match arms to match
+            }
+        };
+        file.read_to_end(&mut buffer).unwrap();
+    }
+    else {
+        if let Some(bytes) = source {
+            buffer.append(bytes);
+        }
+    }
 
     let mut out: Vec<Token> = Vec::new();
     let mut identifiers: HashMap<usize, String> = HashMap::new();
@@ -153,8 +160,8 @@ mod tests {
 
     #[test]
     fn tokenize_alnum() {
-        let path = "tests/tokenize_alnum.baba";
-        let (tokens, _identifiers) = tokenize(path);
+        let path = String::from("tests/tokenize_alnum.baba");
+        let (tokens, _identifiers) = tokenize(Some(path), None);
 
         assert_eq!(
             tokens,
