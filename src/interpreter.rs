@@ -736,7 +736,6 @@ fn exec_simple<'a>(
                         }
                     }
                     else if let Type::Empty(_) = &mut source.obj_type {
-                        glob = if globals.contains_key(target_id) {true} else {false};
                         copy_value = Some(target.clone());
                     }
                     else {
