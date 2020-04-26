@@ -576,20 +576,27 @@ fn initialize<'a>(
     globals: &mut HashMap<usize, Object>,
     identifiers: &HashMap<usize, String>
 ) {
-    if globals.contains_key(&id) || locals.contains_key(&id) {
-        throw_error(
-            ErrorType::ObjectAlreadyDefinedError, 
-            format!("Object {} cannot be initialized if it already exists in the locals or globals", id),
-            Some((&[id], identifiers))
-        );
+    let extra_float = if let Some(Object {reference_count: _, obj_type: Type::Empty(_)}) = globals.get(&id) {
+        true
+    }
+    else if let Some(Object {reference_count: _, obj_type: Type::Empty(_)}) = locals.get(&id) {
+        false
     }
     else {
-        if float {
-            globals.insert(id, obj);
+        if globals.contains_key(&id) || locals.contains_key(&id) {
+            return throw_error(
+                ErrorType::ObjectAlreadyDefinedError, 
+                format!("Object {} cannot be initialized if it already exists in the locals or globals", id),
+                Some((&[id], identifiers))
+            );
         }
-        else {
-            locals.insert(id, obj);
-        }
+        float
+    };
+    if extra_float {
+        globals.insert(id, obj);
+    }
+    else {
+        locals.insert(id, obj);
     }
 }
 
@@ -1284,6 +1291,7 @@ fn exec_simple<'a>(
                 2 => {
                     if let Some(obj) = find_value(target_id, locals, globals, identifiers) {
                         return_value = Some(obj);
+                        return_scope = *source_id;
                     }
                 }
                 3 => {
