@@ -49,6 +49,7 @@ pub enum Property {
     Down,
     Left,
     Right,
+    Chill,
     // GROUP
     Shift,
     Sink,
@@ -140,6 +141,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<usize, String>) -> 
             "up" => Token::Property(Property::Up),
             "left" => Token::Property(Property::Left),
             "down" => Token::Property(Property::Down),
+            "chill" => Token::Property(Property::Chill),
             // - Group
             "shift" => Token::Property(Property::Shift),
             "sink" => Token::Property(Property::Sink),

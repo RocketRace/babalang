@@ -30,6 +30,7 @@ pub enum Simple {
     Up(usize, bool),
     Left(usize, bool),
     Down(usize, bool),
+    Chill(usize, bool),
     // all (subset of you)
     AllMove(bool),
     AllTurn(bool),
@@ -39,6 +40,7 @@ pub enum Simple {
     AllUp(bool),
     AllLeft(bool),
     AllDown(bool),
+    AllChill(bool),
     // group
     Shift(usize, bool),
     Sink(usize),
@@ -230,6 +232,7 @@ pub fn validate<'a>(
         "YouUp" => instr = generic_you(statement, "UP", &Simple::Up, &Simple::AllUp),
         "YouLeft" => instr = generic_you(statement, "LEFT", &Simple::Left, &Simple::AllLeft),
         "YouDown" => instr = generic_you(statement, "DOWN", &Simple::Down, &Simple::AllDown),
+        "YouChill" => instr = generic_you(statement, "CHILL", &Simple::Chill, &Simple::AllChill),
         "YouSum" => {
             let conds = conditions(statement);
             instr = if let Noun::Identifier(id) = statement.subject {

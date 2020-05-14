@@ -13,6 +13,8 @@ use std::process::exit;
 use std::time::Duration;
 use std::thread::sleep;
 
+use rand::random;
+
 /// Executes a Babalang AST in the global scope.
 pub fn exec<'a>(ast: &'a [Instruction], identifiers: &HashMap<usize, String>) {
     let mut locals: HashMap<usize, Object> = HashMap::new();
@@ -1576,6 +1578,43 @@ fn exec_simple<'a>(
                 }
             }
         },
+        Simple::Chill(id, not) => {
+            if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
+                if let Type::You(you) = &mut obj.obj_type {
+                    if *not {
+                        // Whatever
+                    }
+                    else {
+                        if you.dir & 1 == 0 {
+                            you.x = random::<u8>();
+                        }
+                        else {
+                            you.y = random::<u8>();
+                        }
+                    }
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    if *not {
+                        // Whatever
+                    }
+                    else {
+                        if you.dir & 1 == 0 {
+                            you.x = random::<u16>();
+                        }
+                        else {
+                            you.y = random::<u16>();
+                        }
+                    }
+                }
+                else {
+                    throw_error(
+                        ErrorType::TypeError, 
+                        format!("Object {} of type {} cannot be CHILL", id, obj.obj_type),
+                        Some((&[*id], identifiers))
+                    );
+                }
+            }
+        },
         Simple::AllMove(not) => {
             exec_all(&Simple::Move, *not, locals, globals, identifiers);
         },
@@ -1599,6 +1638,9 @@ fn exec_simple<'a>(
         },
         Simple::AllDown(not) => {
             exec_all(&Simple::Down, *not, locals, globals, identifiers);
+        },
+        Simple::AllChill(not) => {
+            exec_all(&Simple::Chill, *not, locals, globals, identifiers);
         },
         Simple::Shift(id, not) => {
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {

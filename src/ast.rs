@@ -336,6 +336,7 @@ fn parse_inner<'a>(
                             Property::Up => push_nonempty(&mut out, validate("YouUp", statement, identifiers)),
                             Property::Left => push_nonempty(&mut out, validate("YouLeft", statement, identifiers)),
                             Property::Down => push_nonempty(&mut out, validate("YouDown", statement, identifiers)),
+                            Property::Chill => push_nonempty(&mut out, validate("YouChill", statement, identifiers)),
                             // GROUP instructions
                             Property::Shift => push_nonempty(&mut out, validate("GroupShift", statement, identifiers)),
                             Property::Sink => push_nonempty(&mut out, validate("GroupSink", statement, identifiers)),
