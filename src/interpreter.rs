@@ -10,6 +10,8 @@ use crate::object::{
 use std::collections::HashMap;
 use std::io::{stdin, stdout, Read, Write};
 use std::process::exit;
+use std::time::Duration;
+use std::thread::sleep;
 
 /// Executes a Babalang AST in the global scope.
 pub fn exec<'a>(ast: &'a [Instruction], identifiers: &HashMap<usize, String>) {
@@ -831,6 +833,26 @@ fn exec_simple<'a>(
                 }
                 else if let Type::You2(_) = obj.obj_type {
                     exit(1);
+                }
+            }
+        },
+        Simple::Sleep(id) => {
+            if let Some(obj) = find_ref(id, locals, globals, identifiers) {
+                if let Type::You(you) = obj.obj_type {
+                    if you.dir & 1 == 0 {
+                        sleep(Duration::from_millis(you.x as u64));
+                    }
+                    else {
+                        sleep(Duration::from_millis(you.y as u64));
+                    }
+                }
+                else if let Type::You2(you) = obj.obj_type {
+                    if you.dir & 1 == 0 {
+                        sleep(Duration::from_millis(you.x as u64));
+                    }
+                    else {
+                        sleep(Duration::from_millis(you.y as u64));
+                    }
                 }
             }
         },

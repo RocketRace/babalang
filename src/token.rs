@@ -39,6 +39,7 @@ pub enum Property {
     // Program
     Win,
     Defeat,
+    Sleep,
     // YOU / YOU2
     Move,
     Turn,
@@ -127,6 +128,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<usize, String>) -> 
             // - Program
             "win" => Token::Property(Property::Win),
             "defeat" => Token::Property(Property::Defeat),
+            "sleep" => Token::Property(Property::Sleep),
             // - Other
             "done" => Token::Property(Property::Done),
             // - You

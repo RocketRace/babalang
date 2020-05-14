@@ -14,6 +14,7 @@ pub enum Simple {
     // any
     Win(usize),
     Defeat(usize),
+    Sleep(usize),
     Text(usize),
     Word(usize),
     IsValue(usize, usize, bool),
@@ -139,6 +140,7 @@ pub fn validate<'a>(
         "IsWord" => instr = generic_any(statement, "WORD", &Simple::Word),
         "IsWin" => instr = generic_any(statement, "WIN", &Simple::Win),
         "IsDefeat" => instr = generic_any(statement, "DEFEAT", &Simple::Defeat),
+        "IsSleep" => instr = generic_any(statement, "SLEEP", &Simple::Sleep),
         "IsEmpty" => instr = generic_any(statement, "EMPTY", &Simple::IsEmpty),
         "IsValue" => {
             let conds = conditions(statement);

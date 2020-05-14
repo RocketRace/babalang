@@ -326,6 +326,7 @@ fn parse_inner<'a>(
                             Property::Word => push_nonempty(&mut out, validate("IsWord", statement, identifiers)),
                             Property::Win => push_nonempty(&mut out, validate("IsWin", statement, identifiers)),
                             Property::Defeat => push_nonempty(&mut out, validate("IsDefeat", statement, identifiers)),
+                            Property::Sleep => push_nonempty(&mut out, validate("IsSleep", statement, identifiers)),
                             // YOU instructions
                             Property::Move => push_nonempty(&mut out, validate("YouMove", statement, identifiers)),
                             Property::Turn => push_nonempty(&mut out, validate("YouTurn", statement, identifiers)),
