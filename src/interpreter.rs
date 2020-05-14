@@ -3,7 +3,7 @@ use crate::instruction::{Instruction, Simple};
 use crate::statement::Target;
 use crate::error_handler::{ErrorType, throw_error, throw_error_str};
 use crate::object::{
-    Object, Type, Level, Image, You, Group, Empty, Reference, ImageInstance,
+    Object, Type, Level, Image, You, You2, Group, Empty, Reference, ImageInstance,
     EMPTY, LEVEL
 };
 
@@ -158,9 +158,45 @@ fn exec_with<'a>(
                                                             complete = false;
                                                         }
                                                     }
+                                                    else if let Type::You2(target_you) = loc_obj.obj_type {
+                                                        if !((you.x as u16 == target_you.x && you.y as u16 == target_you.y) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
                                                 }
                                                 for (_, loc_obj) in globals.iter() {
                                                     if let Type::You(target_you) = loc_obj.obj_type {
+                                                        if !((you.x == target_you.x && you.y == target_you.y) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_you) = loc_obj.obj_type {
+                                                        if !((you.x as u16 == target_you.x && you.y as u16 == target_you.y) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else if let Type::You2(you) = source.obj_type {
+                                                for (_, loc_obj) in locals.iter() {
+                                                    if let Type::You(target_you) = loc_obj.obj_type {
+                                                        if !((you.x == target_you.x as u16 && you.y == target_you.y as u16) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_you) = loc_obj.obj_type {
+                                                        if !((you.x == target_you.x && you.y == target_you.y) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                }
+                                                for (_, loc_obj) in globals.iter() {
+                                                    if let Type::You(target_you) = loc_obj.obj_type {
+                                                        if !((you.x == target_you.x as u16 && you.y == target_you.y as u16) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_you) = loc_obj.obj_type {
                                                         if !((you.x == target_you.x && you.y == target_you.y) ^ conds.sign) {
                                                             complete = false;
                                                         }
@@ -277,6 +313,27 @@ fn exec_with<'a>(
                                                             complete = false;
                                                         }
                                                     }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else {
+                                                        complete = false;
+                                                        throw_error_str(ErrorType::TypeError, "Invalid target for FACING conditional");
+                                                    }
+                                                }
+                                                else if let Type::You2(you) = source.obj_type {
+                                                    if let Type::You(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
                                                     else {
                                                         complete = false;
                                                         throw_error_str(ErrorType::TypeError, "Invalid target for FACING conditional");
@@ -303,6 +360,27 @@ fn exec_with<'a>(
                                             for (_, obj) in locals.iter() {
                                                 if let Type::You(you) = source.obj_type {
                                                     if let Type::You(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else {
+                                                        complete = false;
+                                                        throw_error_str(ErrorType::TypeError, "Invalid target for FACING conditional");
+                                                    }
+                                                }
+                                                else if let Type::You2(you) = source.obj_type {
+                                                    if let Type::You(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
                                                         if !((you < target_obj) ^ conds.sign) {
                                                             complete = false;
                                                         }
@@ -335,6 +413,27 @@ fn exec_with<'a>(
                                                             complete = false;
                                                         }
                                                     }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else {
+                                                        complete = false;
+                                                        throw_error_str(ErrorType::TypeError, "Invalid target for FACING conditional");
+                                                    }
+                                                }
+                                                else if let Type::You2(you) = source.obj_type {
+                                                    if let Type::You(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
+                                                    else if let Type::You2(target_obj) = obj.obj_type {
+                                                        if !((you < target_obj) ^ conds.sign) {
+                                                            complete = false;
+                                                        }
+                                                    }
                                                     else {
                                                         complete = false;
                                                         throw_error_str(ErrorType::TypeError, "Invalid target for FACING conditional");
@@ -363,6 +462,11 @@ fn exec_with<'a>(
                                                     complete = false;
                                                 }
                                             }
+                                            else if let Type::You2(you) = &source.obj_type {
+                                                if !((you.dir == 0) ^ conds.sign) {
+                                                    complete = false;
+                                                }
+                                            }
                                             else {
                                                 complete = false;
                                                 throw_error_str(ErrorType::TypeError, "Invalid subject for FACING conditional");
@@ -370,6 +474,11 @@ fn exec_with<'a>(
                                         }
                                         else if let Target::Property(Property::Up) = target {
                                             if let Type::You(you) = &source.obj_type {
+                                                if !((you.dir == 1) ^ conds.sign) {
+                                                    complete = false;
+                                                }
+                                            }
+                                            else if let Type::You2(you) = &source.obj_type {
                                                 if !((you.dir == 1) ^ conds.sign) {
                                                     complete = false;
                                                 }
@@ -385,6 +494,11 @@ fn exec_with<'a>(
                                                     complete = false;
                                                 }
                                             }
+                                            else if let Type::You2(you) = &source.obj_type {
+                                                if !((you.dir == 2) ^ conds.sign) {
+                                                    complete = false;
+                                                }
+                                            }
                                             else {
                                                 complete = false;
                                                 throw_error_str(ErrorType::TypeError, "Invalid subject for FACING conditional");
@@ -392,6 +506,11 @@ fn exec_with<'a>(
                                         }
                                         else if let Target::Property(Property::Down) = target {
                                             if let Type::You(you) = &source.obj_type {
+                                                if !((you.dir == 3) ^ conds.sign) {
+                                                    complete = false;
+                                                }
+                                            }
+                                            else if let Type::You2(you) = &source.obj_type {
                                                 if !((you.dir == 3) ^ conds.sign) {
                                                     complete = false;
                                                 }
@@ -464,6 +583,11 @@ fn exec_with<'a>(
                             match pref.prefix {
                                 Prefix::Lonely => {
                                     if let Type::You(you) = source.obj_type {
+                                        if !((you.x == 0 && you.y == 0) ^ pref.sign) {
+                                            complete = false;
+                                        }
+                                    }
+                                    else if let Type::You2(you) = source.obj_type {
                                         if !((you.x == 0 && you.y == 0) ^ pref.sign) {
                                             complete = false;
                                         }
@@ -612,6 +736,16 @@ fn exec_simple<'a>(
                 })
             }, *float, locals, globals, identifiers);
         },
+        Simple::InitYou2(id, float) => {
+            initialize(*id, Object { 
+                reference_count: 0,
+                obj_type: Type::You2(You2 {
+                    x: 0,
+                    y: 0,
+                    dir: 0
+                })
+            }, *float, locals, globals, identifiers);
+        },
         Simple::InitGroup(id, float) => {
             initialize(*id, Object { 
                 reference_count: 0,
@@ -637,6 +771,16 @@ fn exec_simple<'a>(
                         }
                         else {
                             you.y = buffer[0];
+                        }
+                    },
+                    Type::You2(you) => {
+                        let mut buffer: [u8; 1] = [0];
+                        stdin().read(&mut buffer).unwrap();
+                        if you.dir & 1 == 0 {
+                            you.x = buffer[0] as u16;
+                        }
+                        else {
+                            you.y = buffer[0] as u16;
                         }
                     },
                     Type::Group(group) => {
@@ -675,11 +819,17 @@ fn exec_simple<'a>(
                 if let Type::You(_) = obj.obj_type {
                     exit(0);
                 }
+                else if let Type::You2(_) = obj.obj_type {
+                    exit(0);
+                }
             }
         },
         Simple::Defeat(id) => {
             if let Some(obj) = find_ref(id, locals, globals, identifiers) {
                 if let Type::You(_) = obj.obj_type {
+                    exit(1);
+                }
+                else if let Type::You2(_) = obj.obj_type {
                     exit(1);
                 }
             }
@@ -714,6 +864,69 @@ fn exec_simple<'a>(
                             copy_value = Some(Object {
                                 reference_count: 0,
                                 obj_type: Type::You(You {
+                                    x: you.x,
+                                    y: you.y,
+                                    dir: you.dir
+                                })
+                            })
+                        }
+                        else if let Type::You2(also_you) = target.obj_type {
+                            if *not {
+                                you.x = 255 - also_you.x as u8;
+                                you.y = 255 - also_you.x as u8;
+                            }
+                            else {
+                                you.x = also_you.x as u8;
+                                you.y = also_you.y as u8;
+                            }
+                            copy_value = Some(Object {
+                                reference_count: 0,
+                                obj_type: Type::You(You {
+                                    x: you.x,
+                                    y: you.y,
+                                    dir: you.dir
+                                })
+                            })
+                        }
+                        else {
+                            throw_error(
+                                ErrorType::ObjectAlreadyDefinedError, 
+                                format!("Object {} of type {} cannot be set to {}", source_id, source.obj_type, target.obj_type),
+                                Some((&[*source_id], identifiers))
+                            );
+                        }
+                    }
+                    if let Type::You2(you) = &mut source.obj_type {
+                        if let Type::You(also_you) = target.obj_type {
+                            if *not {
+                                you.x = 255 - also_you.x as u16;
+                                you.y = 255 - also_you.x as u16;
+                            }
+                            else {
+                                you.x = also_you.x as u16;
+                                you.y = also_you.y as u16;
+                            }
+                            copy_value = Some(Object {
+                                reference_count: 0,
+                                obj_type: Type::You2(You2 {
+                                    x: you.x,
+                                    y: you.y,
+                                    dir: you.dir
+                                })
+                            })
+                        }
+                        else if let Type::You2(also_you) = target.obj_type {
+                            if *not {
+                                you.x = 255 - also_you.x;
+                                you.y = 255 - also_you.x;
+                            }
+                            else {
+                                you.x = also_you.x;
+                                you.y = also_you.y;
+                            }
+                            copy_value = Some(Object {
+                                reference_count: 0,
+                                obj_type: Type::You2(You2 {
                                     x: you.x,
                                     y: you.y,
                                     dir: you.dir
@@ -788,11 +1001,21 @@ fn exec_simple<'a>(
         },
         // Targets are guaranteed to be Noun::Identifier or Noun::All
         Simple::IsSum(source_id, targets, nots) => {
-            let (mut sum_x, mut sum_y): (u8, u8) = (0, 0);
+            let (mut sum_x, mut sum_y): (u16, u16) = (0, 0);
             for (target, not) in targets.iter().zip(nots.iter()) {
                 if let Noun::Identifier(id) = target {
                     if let Some(target_obj) = find_value(id, locals, globals, identifiers) {
                         if let Type::You(you) = target_obj.obj_type {
+                            if *not {
+                                sum_x = sum_x.wrapping_sub(you.x as u16);
+                                sum_y = sum_y.wrapping_sub(you.y as u16);
+                            }
+                            else {
+                                sum_x = sum_x.wrapping_add(you.x as u16);
+                                sum_y = sum_y.wrapping_add(you.y as u16);
+                            }
+                        }
+                        else if let Type::You2(you) = target_obj.obj_type {
                             if *not {
                                 sum_x = sum_x.wrapping_sub(you.x);
                                 sum_y = sum_y.wrapping_sub(you.y);
@@ -823,7 +1046,7 @@ fn exec_simple<'a>(
                 // While the use of ALL is not necessarily efficient or fast,
                 // the concept itself is niche and doesn't warrant extended use
                 else if let Noun::All = target {
-                    let (mut all_x, mut all_y): (u8, u8) = (0, 0);
+                    let (mut all_x, mut all_y): (u16, u16) = (0, 0);
                     // Get all YOU objects in the current scope
                     let all_loc = locals.values()
                         .filter(|x| matches!(
@@ -838,12 +1061,20 @@ fn exec_simple<'a>(
                     // Take their sum
                     for value in all_loc {
                         if let Type::You(you) = value {
+                            all_x = all_x.wrapping_add(you.x as u16);
+                            all_y = all_y.wrapping_add(you.y as u16);
+                        }
+                        else if let Type::You2(you) = value {
                             all_x = all_x.wrapping_add(you.x);
                             all_y = all_y.wrapping_add(you.y);
                         }
                     }
                     for value in all_glob {
                         if let Type::You(you) = value {
+                            all_x = all_x.wrapping_add(you.x as u16);
+                            all_y = all_y.wrapping_add(you.y as u16);
+                        }
+                        else if let Type::You2(you) = value {
                             all_x = all_x.wrapping_add(you.x);
                             all_y = all_y.wrapping_add(you.y);
                         }
@@ -870,12 +1101,20 @@ fn exec_simple<'a>(
             // Take the result and apply that to our source object
             if let Some(obj) = locals.get_mut(&source_id) {
                 if let Type::You(you_source) = &mut obj.obj_type {
+                    you_source.x = sum_x as u8;
+                    you_source.y = sum_y as u8;
+                }
+                else if let Type::You2(you_source) = &mut obj.obj_type {
                     you_source.x = sum_x;
                     you_source.y = sum_y;
                 }
             }
             else if let Some(obj) = globals.get_mut(&source_id) {
                 if let Type::You(you_source) = &mut obj.obj_type {
+                    you_source.x = sum_x as u8;
+                    you_source.y = sum_y as u8;
+                }
+                else if let Type::You2(you_source) = &mut obj.obj_type {
                     you_source.x = sum_x;
                     you_source.y = sum_y;
                 }
@@ -883,7 +1122,7 @@ fn exec_simple<'a>(
             else {
                 initialize(*source_id, Object {
                     reference_count: 0, 
-                    obj_type: Type::You(You {
+                    obj_type: Type::You2(You2 {
                         x: sum_x,
                         y: sum_y,
                         dir: 0
@@ -975,6 +1214,88 @@ fn exec_simple<'a>(
                         _ => ()
                     }
                 }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    // 0 => Right
+                    // 1 => Up
+                    // 2 => Left
+                    // 3 => Down
+                    match you.dir {
+                        0 => {
+                            if *not {
+                                if you.x == 0 {
+                                    you.x = 65535;
+                                }
+                                else {
+                                    you.x -= 1;
+                                }
+                            }
+                            else {
+                                if you.x == 65535 {
+                                    you.x = 0;
+                                }
+                                else {
+                                    you.x += 1;
+                                }
+                            }
+                        },
+                        1 => {
+                            if *not {
+                                if you.y == 0 {
+                                    you.y = 65535;
+                                }
+                                else {
+                                    you.y -= 1;
+                                }
+                            }
+                            else {
+                                if you.y == 65535 {
+                                    you.y = 0;
+                                }
+                                else {
+                                    you.y += 1;
+                                }
+                            }
+                        },
+                        2 => {
+                            if *not {
+                                if you.x == 65535 {
+                                    you.x = 0;
+                                }
+                                else {
+                                    you.x += 1;
+                                }
+                            }
+                            else {
+                                if you.x == 0 {
+                                    you.x = 65535;
+                                }
+                                else {
+                                    you.x -= 1;
+                                }
+                            }
+                        },
+                        3 => {
+                            if *not {
+                                if you.y == 65535 {
+                                    you.y = 0;
+                                }
+                                else {
+                                    you.y += 1;
+                                }
+                            }
+                            else {
+                                if you.y == 0 {
+                                    you.y = 65535;
+                                }
+                                else {
+                                    you.y -= 1;
+                                }
+                            }
+                        },
+                        // This should never happen
+                        _ => ()
+                    }
+                }
                 else {
                     throw_error(
                         ErrorType::TypeError, 
@@ -987,6 +1308,24 @@ fn exec_simple<'a>(
         Simple::Turn(id, not) => {
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::You(you) = &mut obj.obj_type {
+                    if *not {
+                        if you.dir == 0 {
+                            you.dir = 3;
+                        }
+                        else {
+                            you.dir -= 1;
+                        }
+                    }
+                    else {
+                        if you.dir == 3 {
+                            you.dir = 0;
+                        }
+                        else {
+                            you.dir += 1;
+                        }
+                    }
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
                     if *not {
                         if you.dir == 0 {
                             you.dir = 3;
@@ -1033,6 +1372,24 @@ fn exec_simple<'a>(
                         }
                     }
                 }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    if *not {
+                        if you.dir & 1 == 0 {
+                            you.x = 0;
+                        }
+                        else {
+                            you.y = 0;
+                        }
+                    }
+                    else {
+                        if you.dir & 1 == 0 {
+                            you.x = 65535;
+                        }
+                        else {
+                            you.y = 65535;
+                        }
+                    }
+                }
                 else {
                     throw_error(
                         ErrorType::TypeError, 
@@ -1045,6 +1402,24 @@ fn exec_simple<'a>(
         Simple::More(id, not) => {
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::You(you) = &mut obj.obj_type {
+                    if *not {
+                        if you.dir & 1 == 0 {
+                            you.x = you.x >> 1;
+                        }
+                        else {
+                            you.y = you.y >> 1;
+                        }
+                    }
+                    else {
+                        if you.dir & 1 == 0 {
+                            you.x = you.x << 1;
+                        }
+                        else {
+                            you.y = you.y << 1;
+                        }
+                    }
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
                     if *not {
                         if you.dir & 1 == 0 {
                             you.x = you.x >> 1;
@@ -1081,6 +1456,14 @@ fn exec_simple<'a>(
                         you.dir = 0;
                     }
                 }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    if *not {
+                        you.dir = 2;
+                    }
+                    else {
+                        you.dir = 0;
+                    }
+                }
                 else {
                     throw_error(
                         ErrorType::TypeError, 
@@ -1093,6 +1476,14 @@ fn exec_simple<'a>(
         Simple::Up(id, not) => {
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::You(you) = &mut obj.obj_type {
+                    if *not {
+                        you.dir = 3;
+                    }
+                    else {
+                        you.dir = 1;
+                    }
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
                     if *not {
                         you.dir = 3;
                     }
@@ -1119,6 +1510,14 @@ fn exec_simple<'a>(
                         you.dir = 2;
                     }
                 }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    if *not {
+                        you.dir = 0;
+                    }
+                    else {
+                        you.dir = 2;
+                    }
+                }
                 else {
                     throw_error(
                         ErrorType::TypeError, 
@@ -1131,6 +1530,14 @@ fn exec_simple<'a>(
         Simple::Down(id, not) => {
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::You(you) = &mut obj.obj_type {
+                    if *not {
+                        you.dir = 1;
+                    }
+                    else {
+                        you.dir = 3;
+                    }
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
                     if *not {
                         you.dir = 1;
                     }
@@ -1594,12 +2001,16 @@ fn exec_all(
     let all_loc: Vec<usize> = locals.iter()
         .filter(|(_, v)| matches!(
             v, Object { reference_count: _, obj_type: Type::You(_)}
+        ) || matches!(
+            v, Object { reference_count: _, obj_type: Type::You2(_)}
         ))
         .map(|(&k, _)| k)
         .collect();
     let all_glob: Vec<usize> = globals.iter()
         .filter(|(_, v)| matches!(
             v, Object { reference_count: _, obj_type: Type::You(_)}
+        ) || matches!(
+            v, Object { reference_count: _, obj_type: Type::You2(_)}
         ))
         .map(|(&k, _)| k)
         .collect();
@@ -1638,6 +2049,25 @@ fn print_object(obj: &Object, id: Option<usize>) {
                 out.flush().unwrap();
             }
         },
+        Type::You2(you) => {
+            if you.dir & 1 == 0 {
+                // Unwrap will catch syscall errors
+                let mut out = stdout();
+                let top = (you.x >> 8) as u8;
+                if top == 0 {
+                    out.write(&[you.x as u8]).unwrap();
+                }
+                else {
+                    out.write(&[(you.x >> 8) as u8, you.x as u8]).unwrap();
+                }
+                out.flush().unwrap();
+            }
+            else {
+                let mut out = stdout();
+                out.write(&[(you.y >> 8) as u8, you.y as u8]).unwrap();
+                out.flush().unwrap();
+            }
+        },
         Type::Group(group) => {
             for object in &group.data {
                 print_object(&object, None);
@@ -1666,6 +2096,14 @@ fn print_object(obj: &Object, id: Option<usize>) {
 fn is_same_type(first: &Object, other: &Object) -> bool {
     if let Type::You(_) = first.obj_type {
         if let Type::You(_) = other.obj_type {
+            true
+        }
+        else {
+            false
+        }
+    }
+    else if let Type::You2(_) = first.obj_type {
+        if let Type::You2(_) = other.obj_type {
             true
         }
         else {

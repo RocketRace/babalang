@@ -105,6 +105,7 @@ fn parse_inner<'a>(
                             },
                             // Initialize primitive objects
                             Property::You => push_nonempty(&mut out, validate("InitYou", statement, identifiers)),
+                            Property::You2 => push_nonempty(&mut out, validate("InitYou2", statement, identifiers)),
                             Property::Group => push_nonempty(&mut out, validate("InitGroup", statement, identifiers)),
                             Property::Tele => {
                                 if let Instruction::PartialTele(id) = validate("InitTele", statement, identifiers) {
@@ -146,6 +147,32 @@ fn parse_inner<'a>(
                                                 throw_error_str(
                                                     ErrorType::InstructionValidationError, 
                                                     "The subjects of FLOAT and YOU must match."
+                                                );
+                                            }
+                                        }
+                                        else if let Some(Target::Property(Property::You2)) = next.action_target {
+                                            let mut valid = false;
+                                            let init = validate("FloatYou2", next, identifiers);
+                                            if let Instruction::Simple(Simple::InitYou2(next_id, _float)) = init {
+                                                if next_id == id {
+                                                    valid = true;
+                                                }
+                                            }
+                                            else if let Instruction::Complex(c) = init.to_owned() {
+                                                let s = c.instruction;
+                                                if let Simple::InitYou2(next_id, _float) = s {
+                                                    if next_id == id {
+                                                        valid = true;
+                                                    }
+                                                }
+                                            }
+                                            if valid {
+                                                push_nonempty(&mut out, init);
+                                            }
+                                            else {
+                                                throw_error_str(
+                                                    ErrorType::InstructionValidationError, 
+                                                    "The subjects of FLOAT and YOU2 must match."
                                                 );
                                             }
                                         }
@@ -287,7 +314,7 @@ fn parse_inner<'a>(
                                         else {
                                             throw_error(
                                                 ErrorType::InstructionValidationError, 
-                                                format!("[{0}] IS FLOAT must be followed by [{0}] IS YOU, GROUP, LEVEL or IMAGE", id),
+                                                format!("[{0}] IS FLOAT must be followed by [{0}] IS YOU, YOU2, GROUP, LEVEL or IMAGE", id),
                                                 Some((&[id], identifiers))
                                             );
                                         }

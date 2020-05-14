@@ -17,6 +17,7 @@ pub enum Type {
     Empty(Empty),
     Reference(Reference),
     You(You),
+    You2(You2),
     Group(Group),
     Level(Level),
     Image(Image),
@@ -39,14 +40,105 @@ pub struct You {
     pub dir: u8 // only lowest 2 bits are used
 }
 
-impl PartialEq for You {
+#[derive(Clone, Copy, Debug)]
+pub struct You2 {
+    pub x: u16,
+    pub y: u16,
+    pub dir: u8 // only lowest 2 bits used
+}
+
+impl PartialEq<You> for You {
     fn eq(&self, other: &You) -> bool {
         self.x == other.x && self.y == other.y
     }
 }
 
-impl PartialOrd for You {
+impl PartialEq<You2> for You {
+    fn eq(&self, other: &You2) -> bool {
+        (self.x as u16) == other.x && (self.y as u16) == other.y
+    }
+}
+
+impl PartialEq<You> for You2 {
+    fn eq(&self, other: &You) -> bool {
+        self.x == other.x as u16 && self.y == other.y as u16
+    }
+}
+
+impl PartialEq<You2> for You2 {
+    fn eq(&self, other: &You2) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+impl PartialOrd<You> for You {
     fn partial_cmp(&self, other: &You) -> Option<Ordering> {
+        match self.dir {
+            0 => {
+                self.x.partial_cmp(&other.x)
+            },
+            1 => {
+                self.y.partial_cmp(&other.y)
+            },
+            2 => {
+                other.x.partial_cmp(&self.x)
+            },
+            3 => {
+                other.y.partial_cmp(&self.y)
+            },
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+impl PartialOrd<You2> for You {
+    fn partial_cmp(&self, other: &You2) -> Option<Ordering> {
+        match self.dir {
+            0 => {
+                (self.x as u16).partial_cmp(&other.x)
+            },
+            1 => {
+                (self.y as u16).partial_cmp(&other.y)
+            },
+            2 => {
+                other.x.partial_cmp(&(self.x as u16))
+            },
+            3 => {
+                other.y.partial_cmp(&(self.y as u16))
+            },
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+impl PartialOrd<You> for You2 {
+    fn partial_cmp(&self, other: &You) -> Option<Ordering> {
+        match self.dir {
+            0 => {
+                self.x.partial_cmp(&(other.x as u16))
+            },
+            1 => {
+                self.y.partial_cmp(&(other.y as u16))
+            },
+            2 => {
+                (other.x as u16).partial_cmp(&self.x)
+            },
+            3 => {
+                (other.y as u16).partial_cmp(&self.y)
+            },
+            _ => {
+                None
+            }
+        }
+    }
+}
+
+impl PartialOrd<You2> for You2 {
+    fn partial_cmp(&self, other: &You2) -> Option<Ordering> {
         match self.dir {
             0 => {
                 self.x.partial_cmp(&other.x)
@@ -130,6 +222,7 @@ impl Display for Type {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Type::You(_) => write!(f, "YOU"),
+            Type::You2(_) => write!(f, "YOU2"),
             Type::Empty(_) => write!(f, "EMPTY"),
             Type::Group(_) => write!(f, "GROUP"),
             Type::Reference(_) => write!(f, "[REFERENCE]"),

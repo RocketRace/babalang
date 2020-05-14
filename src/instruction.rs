@@ -9,6 +9,7 @@ use std::collections::HashMap;
 pub enum Simple {
     // init
     InitYou(usize, bool),
+    InitYou2(usize, bool),
     InitGroup(usize, bool),
     // any
     Win(usize),
@@ -125,12 +126,14 @@ pub fn validate<'a>(
     let mut instr = Instruction::NoOp;
     match instruction_type {
         "InitYou" => instr = generic_init(statement, "YOU", false, &Simple::InitYou),
+        "InitYou2" => instr = generic_init(statement, "YOU2", false, &Simple::InitYou2),
         "InitGroup" => instr = generic_init(statement, "GROUP", false, &Simple::InitGroup),
         "InitTele" => instr = generic_partial(statement, "TELE", &Instruction::PartialTele),
         "InitLevel" => instr = generic_partial(statement, "LEVEL", &Instruction::PartialLevel),
         "InitImage" => instr = generic_partial(statement, "IMAGE", &Instruction::PartialImage),
         "InitFloat" => instr = generic_partial(statement, "FLOAT", &Instruction::PartialFloat),
         "FloatYou" => instr = generic_init(statement, "YOU", true, &Simple::InitYou),
+        "FloatYou2" => instr = generic_init(statement, "YOU2", true, &Simple::InitYou2),
         "FloatGroup" => instr = generic_init(statement, "GROUP", true, &Simple::InitGroup),
         "IsText" => instr = generic_any(statement, "TEXT", &Simple::Text),
         "IsWord" => instr = generic_any(statement, "WORD", &Simple::Word),

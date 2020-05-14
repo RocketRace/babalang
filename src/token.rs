@@ -26,6 +26,7 @@ pub enum Verb {
 pub enum Property {
     // Primitives
     You,
+    You2,
     Group,
     Tele,
     // Static
@@ -38,7 +39,7 @@ pub enum Property {
     // Program
     Win,
     Defeat,
-    // YOU
+    // YOU / YOU2
     Move,
     Turn,
     Fall,
@@ -115,6 +116,7 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<usize, String>) -> 
             // Property keywords
             // - Initializers
             "you" => Token::Property(Property::You),
+            "you2" => Token::Property(Property::You2),
             "group" => Token::Property(Property::Group),
             "tele" => Token::Property(Property::Tele),
             // - Static
