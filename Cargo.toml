@@ -9,4 +9,4 @@ repository = "https://github.com/rocketrace/babalang/"
 
 [dependencies]
 
-rand = "0.*"
+rand = "^0.7"
