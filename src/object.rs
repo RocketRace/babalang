@@ -5,14 +5,14 @@ use std::collections::HashMap;
 use std::cmp::Ordering;
 
 /// The base object for all Babalang objects
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Object {
     pub reference_count: usize,
     pub obj_type: Type
 }
 
 /// The type of a Babalang object
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Type {
     Empty(Empty),
     Reference(Reference),
@@ -23,16 +23,16 @@ pub enum Type {
     ImageInstance(ImageInstance)
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Empty {}
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Reference {
     // virtual pointer
     pub pointer: usize
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct You {
     pub x: u8,
     pub y: u8,
@@ -67,7 +67,7 @@ impl PartialOrd for You {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Group {
     pub index: usize,
     pub data: Vec<Object>
@@ -85,7 +85,7 @@ impl PartialOrd for Group {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Level {
     pub identifier: usize,
     pub arguments: Vec<usize>,
@@ -99,7 +99,7 @@ impl PartialEq for Level {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Image {
     pub identifier: usize,
     pub constructor: Level,
@@ -113,7 +113,7 @@ impl PartialEq for Image {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ImageInstance {
     pub class: usize,
     pub attributes: HashMap<usize, Option<Object>>,

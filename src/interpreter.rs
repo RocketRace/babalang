@@ -574,23 +574,16 @@ fn initialize<'a>(
     float: bool,
     locals: &mut HashMap<usize, Object>, 
     globals: &mut HashMap<usize, Object>,
-    identifiers: &HashMap<usize, String>
+    _identifiers: &HashMap<usize, String>
 ) {
-    let extra_float = if let Some(Object {reference_count: _, obj_type: Type::Empty(_)}) = globals.get(&id) {
+    let extra_float = if float {
+        if locals.contains_key(&id) {
+            locals.remove(&id);
+        }
         true
     }
-    else if let Some(Object {reference_count: _, obj_type: Type::Empty(_)}) = locals.get(&id) {
-        false
-    }
     else {
-        if globals.contains_key(&id) || locals.contains_key(&id) {
-            return throw_error(
-                ErrorType::ObjectAlreadyDefinedError, 
-                format!("Object {} cannot be initialized if it already exists in the locals or globals", id),
-                Some((&[id], identifiers))
-            );
-        }
-        float
+        globals.contains_key(&id)
     };
     if extra_float {
         globals.insert(id, obj);
@@ -1321,13 +1314,13 @@ fn exec_simple<'a>(
         Simple::Power(id) => {
             // This line is here to avoid borrow conflicts
             let mut new_globals = globals.clone();
+            let mut new_locals = locals.clone();
             let mut ret_val = None;
             let self_ref = find_value(id, locals, globals, identifiers);
             let glob = if let Some(_) = globals.get(id) {true} else {false};
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::Level(level) = &mut obj.obj_type {
                     if level.arguments.len() == level.parameters.len() {
-                        let mut new_locals = HashMap::new();
                         for (arg, param) in level.arguments.iter().zip(level.parameters.iter()) {
                             new_locals.insert(*arg, param.clone());
                         }
@@ -1356,7 +1349,6 @@ fn exec_simple<'a>(
                 }
                 else if let Type::Image(image) = &mut obj.obj_type {
                     if image.constructor.arguments.len() - 1 == image.constructor.parameters.len() {
-                        let mut new_locals = HashMap::new();
                         for (arg, param) in image.constructor.arguments
                             .iter()
                             .skip(1)
