@@ -649,6 +649,18 @@ fn exec_with<'a>(
                                         complete = !pref.sign;
                                     }
                                 },
+                                Prefix::Often => {
+                                    let dice: f64 = random();
+                                    if (dice > (3.0 / 4.0)) ^ pref.sign {
+                                        complete = false;
+                                    }
+                                },
+                                Prefix::Seldom => {
+                                    let dice: f64 = random();
+                                    if (dice > (1.0 / 6.0)) ^ pref.sign {
+                                        complete = false;
+                                    }
+                                },
                             }
                         }
                         if complete {

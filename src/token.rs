@@ -61,7 +61,9 @@ pub enum Property {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Prefix {
     Idle,
-    Lonely
+    Lonely,
+    Often,
+    Seldom
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -151,6 +153,8 @@ pub fn parse<'a>(buffer: &'a [u8], identifiers: &mut HashMap<usize, String>) -> 
             // Prefix keywords 
             "idle" => Token::Prefix(Prefix::Idle),
             "lonely" => Token::Prefix(Prefix::Lonely),
+            "often" => Token::Prefix(Prefix::Often),
+            "seldom" => Token::Prefix(Prefix::Seldom),
             // "And"
             "and" => Token::And,
             // "Not"
