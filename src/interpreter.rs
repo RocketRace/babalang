@@ -840,10 +840,10 @@ fn exec_simple<'a>(
             if let Some(obj) = find_ref(id, locals, globals, identifiers) {
                 if let Type::You(you) = obj.obj_type {
                     if you.dir & 1 == 0 {
-                        sleep(Duration::from_millis(you.x as u64));
+                        sleep(Duration::from_secs(you.x as u64));
                     }
                     else {
-                        sleep(Duration::from_millis(you.y as u64));
+                        sleep(Duration::from_secs(you.y as u64));
                     }
                 }
                 else if let Type::You2(you) = obj.obj_type {
