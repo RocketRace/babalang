@@ -1367,6 +1367,10 @@ fn exec_simple<'a>(
                         }
                     }
                 }
+                else if let Type::Group(group) = &mut obj.obj_type {
+                    // This ignores NOT, because turning 180 degrees in any direction is equivalent
+                    group.data.reverse();
+                }
                 else {
                     throw_error(
                         ErrorType::TypeError, 
@@ -1932,7 +1936,7 @@ fn exec_simple<'a>(
             }
         }
     }
-    println!("LOCALS {:#?}\nGLOBALS {:#?}", locals, globals);
+    // println!("LOCALS {:#?}\nGLOBALS {:#?}", locals, globals);
     (return_scope, return_value)
 }
 
