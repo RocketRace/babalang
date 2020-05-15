@@ -1385,23 +1385,13 @@ fn exec_simple<'a>(
                 if let Type::You(you) = &mut obj.obj_type {
                     if *not {
                         if you.dir & 1 == 0 {
-                            you.x = 0;
-                        }
-                        else {
-                            you.y = 0;
-                        }
-                    }
-                    else {
-                        if you.dir & 1 == 0 {
                             you.x = 255;
                         }
                         else {
                             you.y = 255;
                         }
                     }
-                }
-                else if let Type::You2(you) = &mut obj.obj_type {
-                    if *not {
+                    else {
                         if you.dir & 1 == 0 {
                             you.x = 0;
                         }
@@ -1409,13 +1399,31 @@ fn exec_simple<'a>(
                             you.y = 0;
                         }
                     }
-                    else {
+                }
+                else if let Type::You2(you) = &mut obj.obj_type {
+                    if *not {
                         if you.dir & 1 == 0 {
                             you.x = 65535;
                         }
                         else {
                             you.y = 65535;
                         }
+                    }
+                    else {
+                        if you.dir & 1 == 0 {
+                            you.x = 0;
+                        }
+                        else {
+                            you.y = 0;
+                        }
+                    }
+                }
+                else if let Type::Group(group) = &mut obj.obj_type {
+                    if *not {
+                        group.index = group.data.len() - 1;
+                    }
+                    else {
+                        group.index = 0;
                     }
                 }
                 else {
