@@ -49,7 +49,7 @@ pub enum Simple {
     HasValue(usize, usize),
     MakeValue(usize, usize),
     // level
-    Power(usize),
+    Power(usize, bool),
     // tele
     FearTele(usize, usize),
     // image
@@ -256,7 +256,9 @@ pub fn validate<'a>(
         "GroupShift" => instr = generic_not(statement, "SHIFT", &Simple::Shift),
         "GroupSink" => instr = generic_any(statement, "SINK", &Simple::Sink),
         "GroupSwap" => instr = generic_any(statement, "SWAP", &Simple::Swap),
-        "LevelPower" => instr = generic_any(statement, "POWER", &Simple::Power),
+        // Power is generic_init, 
+        "LevelPower" => instr = generic_init(statement, "POWER", false, &Simple::Power),
+        "FloatPower" => instr = generic_init(statement, "POWER", true,  &Simple::Power),
         _ => {
             throw_error_str(
                 ErrorType::InstructionValidationError, 
@@ -409,7 +411,10 @@ fn generic_init<'a>(
 ) -> Instruction {
     let conds = conditions(statement);
     if let Noun::Identifier(id) = statement.subject {
-        if let (None, None) = conds {
+        if target == "POWER" { // Hacky way to allow for FLOATing POWER
+            Instruction::Simple(simple_factory(id, float))
+        }
+        else if let (None, None) = conds {
             if !statement.action_sign {
                 Instruction::Simple(simple_factory(id, float))
             }

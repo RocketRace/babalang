@@ -311,6 +311,9 @@ fn parse_inner<'a>(
                                                 }
                                             }
                                         }
+                                        else if let Instruction::Simple(Simple::Power(_, _)) = validate("LevelPower", next, identifiers) {
+                                            push_nonempty(&mut out, validate("FloatPower", next, identifiers));
+                                        }
                                         else {
                                             throw_error(
                                                 ErrorType::InstructionValidationError, 

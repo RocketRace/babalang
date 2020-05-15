@@ -134,7 +134,7 @@ fn exec_with<'a>(
                     Simple::Swap(id) => Some(id),
                     Simple::HasValue(id, _) => Some(id),
                     Simple::MakeValue(id, _) => Some(id),
-                    Simple::Power(id) => Some(id),
+                    Simple::Power(id, _) => Some(id),
                     Simple::FearTele(id, _) => Some(id),
                     Simple::FollowAttribute(id, _) => Some(id),
                     Simple::EatValue(id, _) => Some(id),
@@ -880,9 +880,9 @@ fn exec_simple<'a>(
                 Some(obj.clone())
             }
             else { None };
-            let mut copy_value = None;
             if let Some(target) = find_ref(target_id, locals, globals, identifiers) {
                 if let Some(source) = &mut maybe_source {
+                    let mut _copy_value = None;
                     // `a is not b`, if a and b are YOU, implies:
                     // a.[value] = - b.[value], where [value] is the
                     // value in the active direction of each.
@@ -897,7 +897,7 @@ fn exec_simple<'a>(
                                 you.x = also_you.x;
                                 you.y = also_you.y;
                             }
-                            copy_value = Some(Object {
+                            _copy_value = Some(Object {
                                 reference_count: 0,
                                 obj_type: Type::You(You {
                                     x: you.x,
@@ -915,7 +915,7 @@ fn exec_simple<'a>(
                                 you.x = also_you.x as u8;
                                 you.y = also_you.y as u8;
                             }
-                            copy_value = Some(Object {
+                            _copy_value = Some(Object {
                                 reference_count: 0,
                                 obj_type: Type::You(You {
                                     x: you.x,
@@ -925,14 +925,10 @@ fn exec_simple<'a>(
                             })
                         }
                         else {
-                            throw_error(
-                                ErrorType::ObjectAlreadyDefinedError, 
-                                format!("Object {} of type {} cannot be set to {}", source_id, source.obj_type, target.obj_type),
-                                Some((&[*source_id], identifiers))
-                            );
+                            _copy_value = Some(target.clone());
                         }
                     }
-                    if let Type::You2(you) = &mut source.obj_type {
+                    else if let Type::You2(you) = &mut source.obj_type {
                         if let Type::You(also_you) = target.obj_type {
                             if *not {
                                 you.x = 255 - also_you.x as u16;
@@ -942,7 +938,7 @@ fn exec_simple<'a>(
                                 you.x = also_you.x as u16;
                                 you.y = also_you.y as u16;
                             }
-                            copy_value = Some(Object {
+                            _copy_value = Some(Object {
                                 reference_count: 0,
                                 obj_type: Type::You2(You2 {
                                     x: you.x,
@@ -960,7 +956,7 @@ fn exec_simple<'a>(
                                 you.x = also_you.x;
                                 you.y = also_you.y;
                             }
-                            copy_value = Some(Object {
+                            _copy_value = Some(Object {
                                 reference_count: 0,
                                 obj_type: Type::You2(You2 {
                                     x: you.x,
@@ -970,24 +966,16 @@ fn exec_simple<'a>(
                             })
                         }
                         else {
-                            throw_error(
-                                ErrorType::ObjectAlreadyDefinedError, 
-                                format!("Object {} of type {} cannot be set to {}", source_id, source.obj_type, target.obj_type),
-                                Some((&[*source_id], identifiers))
-                            );
+                            _copy_value = Some(target.clone());
                         }
                     }
                     else if let Type::Empty(_) = &mut source.obj_type {
-                        copy_value = Some(target.clone());
+                        _copy_value = Some(target.clone());
                     }
                     else {
-                        throw_error(
-                            ErrorType::ObjectAlreadyDefinedError, 
-                            format!("Object {} of type {} cannot be set to {}", source_id, source.obj_type, target.obj_type),
-                            Some((&[*source_id], identifiers))
-                        );
+                        _copy_value = Some(target.clone());
                     }
-                    if let Some(new) = copy_value {
+                    if let Some(new) = _copy_value {
                         if glob {
                             globals.insert(*source_id, new);
                         }
@@ -1794,13 +1782,13 @@ fn exec_simple<'a>(
             }
 
         },
-        Simple::Power(id) => {
+        Simple::Power(id, float) => {
             // This line is here to avoid borrow conflicts
             let mut new_globals = globals.clone();
             let mut new_locals = locals.clone();
             let mut ret_val = None;
             let self_ref = find_value(id, locals, globals, identifiers);
-            let glob = if let Some(_) = globals.get(id) {true} else {false};
+            
             if let Some(obj) = find_mut_ref(id, locals, globals, identifiers) {
                 if let Type::Level(level) = &mut obj.obj_type {
                     if level.arguments.len() == level.parameters.len() {
@@ -1883,9 +1871,15 @@ fn exec_simple<'a>(
                 }
             }
             if let Some(obj) = ret_val {
-                if glob {
+                if *float {
+                    if locals.contains_key(id) {
+                        locals.remove(id);
+                    }
                     globals.insert(*id, obj);
-                }   
+                }
+                else if globals.contains_key(id) {
+                    globals.insert(*id, obj);
+                }
                 else {
                     locals.insert(*id, obj);
                 }
@@ -1938,6 +1932,7 @@ fn exec_simple<'a>(
             }
         }
     }
+    println!("LOCALS {:#?}\nGLOBALS {:#?}", locals, globals);
     (return_scope, return_value)
 }
 
