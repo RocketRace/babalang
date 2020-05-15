@@ -868,6 +868,13 @@ fn exec_simple<'a>(
                         sleep(Duration::from_millis(you.y as u64));
                     }
                 }
+                else {
+                    throw_error(
+                        ErrorType::TypeError, 
+                        format!("Object {} of type {} cannot be SLEEP", id, obj.obj_type),
+                        Some((&[*id], identifiers))
+                    );
+                }
             }
         },
         Simple::IsValue(source_id, target_id, not) => {
