@@ -871,124 +871,76 @@ fn exec_simple<'a>(
             }
         },
         Simple::IsValue(source_id, target_id, not) => {
-            let mut glob = false;
-            let mut maybe_source = if let Some(obj) = locals.get(&source_id) {
-                Some(obj.clone())
+            let glob = globals.contains_key(source_id);
+            let dir = if let Some(source) = find_ref(source_id, locals, globals, identifiers) {
+                if let Type::You(you) = source.obj_type {
+                    you.dir
+                }
+                else if let Type::You2(you) = source.obj_type {
+                    you.dir
+                }
+                else {
+                    0
+                }
             }
-            else if let Some(obj) = globals.get(&source_id) {
-                glob = true;
-                Some(obj.clone())
-            }
-            else { None };
+            else {
+                0
+            };
             if let Some(target) = find_ref(target_id, locals, globals, identifiers) {
-                if let Some(source) = &mut maybe_source {
-                    let mut _copy_value = None;
-                    // `a is not b`, if a and b are YOU, implies:
-                    // a.[value] = - b.[value], where [value] is the
-                    // value in the active direction of each.
-                    // Since values are u8, 255-value is the "negation"
-                    if let Type::You(you) = &mut source.obj_type {
-                        if let Type::You(also_you) = target.obj_type {
-                            if *not {
-                                you.x = 255 - also_you.x;
-                                you.y = 255 - also_you.x;
-                            }
-                            else {
-                                you.x = also_you.x;
-                                you.y = also_you.y;
-                            }
-                            _copy_value = Some(Object {
-                                reference_count: 0,
-                                obj_type: Type::You(You {
-                                    x: you.x,
-                                    y: you.y,
-                                    dir: you.dir
-                                })
-                            })
-                        }
-                        else if let Type::You2(also_you) = target.obj_type {
-                            if *not {
-                                you.x = 255 - also_you.x as u8;
-                                you.y = 255 - also_you.x as u8;
-                            }
-                            else {
-                                you.x = also_you.x as u8;
-                                you.y = also_you.y as u8;
-                            }
-                            _copy_value = Some(Object {
-                                reference_count: 0,
-                                obj_type: Type::You(You {
-                                    x: you.x,
-                                    y: you.y,
-                                    dir: you.dir
-                                })
-                            })
-                        }
-                        else {
-                            _copy_value = Some(target.clone());
-                        }
-                    }
-                    else if let Type::You2(you) = &mut source.obj_type {
-                        if let Type::You(also_you) = target.obj_type {
-                            if *not {
-                                you.x = 255 - also_you.x as u16;
-                                you.y = 255 - also_you.x as u16;
-                            }
-                            else {
-                                you.x = also_you.x as u16;
-                                you.y = also_you.y as u16;
-                            }
-                            _copy_value = Some(Object {
-                                reference_count: 0,
-                                obj_type: Type::You2(You2 {
-                                    x: you.x,
-                                    y: you.y,
-                                    dir: you.dir
-                                })
-                            })
-                        }
-                        else if let Type::You2(also_you) = target.obj_type {
-                            if *not {
-                                you.x = 255 - also_you.x;
-                                you.y = 255 - also_you.x;
-                            }
-                            else {
-                                you.x = also_you.x;
-                                you.y = also_you.y;
-                            }
-                            _copy_value = Some(Object {
-                                reference_count: 0,
-                                obj_type: Type::You2(You2 {
-                                    x: you.x,
-                                    y: you.y,
-                                    dir: you.dir
-                                })
-                            })
-                        }
-                        else {
-                            _copy_value = Some(target.clone());
-                        }
-                    }
-                    else if let Type::Empty(_) = &mut source.obj_type {
-                        _copy_value = Some(target.clone());
+                if let Type::You(you) = target.obj_type {
+                    if *not {
+                        initialize(*source_id, Object {
+                            reference_count: 0,
+                            obj_type: Type::You(
+                                You {
+                                    x: 255 - you.x,
+                                    y: 255 - you.y,
+                                    dir: dir
+                                }
+                            )
+                        }, glob, locals, globals, identifiers);
                     }
                     else {
-                        _copy_value = Some(target.clone());
+                        initialize(*source_id, Object {
+                            reference_count: 0,
+                            obj_type: Type::You(
+                                You {
+                                    x: you.x,
+                                    y: you.y,
+                                    dir: dir
+                                }
+                            )
+                        }, glob, locals, globals, identifiers);
                     }
-                    if let Some(new) = _copy_value {
-                        if glob {
-                            globals.insert(*source_id, new);
-                        }
-                        else {
-                            locals.insert(*source_id, new);
-                        }
+                }
+                else if let Type::You2(you) = target.obj_type {
+                    if *not {
+                        initialize(*source_id, Object {
+                            reference_count: 0,
+                            obj_type: Type::You2(
+                                You2 {
+                                    x: 65535 - you.x,
+                                    y: 65535 - you.y,
+                                    dir: dir
+                                }
+                            )
+                        }, glob, locals, globals, identifiers);
+                    }
+                    else {
+                        initialize(*source_id, Object {
+                            reference_count: 0,
+                            obj_type: Type::You2(
+                                You2 {
+                                    x: you.x,
+                                    y: you.y,
+                                    dir: dir
+                                }
+                            )
+                        }, glob, locals, globals, identifiers);
                     }
                 }
                 else {
-                    if let Some(target) = find_value(target_id, locals, globals, identifiers) {
-                        // We clone here because the specification of IS calls for it
-                        initialize(*source_id, target, false, locals, globals, identifiers);
-                    }
+                    initialize(*source_id, target.clone(), glob, locals, globals, identifiers);
                 }
             }
         },
@@ -1075,11 +1027,15 @@ fn exec_simple<'a>(
                     let all_loc = locals.values()
                         .filter(|x| matches!(
                             x, Object { reference_count: _, obj_type: Type::You(_)}
+                        ) || matches!(
+                            x, Object { reference_count: _, obj_type: Type::You2(_)}
                         ))
                         .map(|x| x.obj_type.clone());
                     let all_glob = globals.values()
                         .filter(|x| matches!(
                             x, Object { reference_count: _, obj_type: Type::You(_)}
+                        ) || matches!(
+                            x, Object { reference_count: _, obj_type: Type::You2(_)}
                         ))
                         .map(|x| x.obj_type.clone());
                     // Take their sum
