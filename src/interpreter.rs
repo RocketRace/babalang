@@ -879,7 +879,7 @@ fn exec_simple<'a>(
         },
         Simple::IsValue(source_id, target_id, not) => {
             let glob = globals.contains_key(source_id);
-            let dir = if let Some(source) = find_ref(source_id, locals, globals, identifiers) {
+            let dir = if let Some(source) = try_find_ref(source_id, locals, globals, identifiers) {
                 if let Type::You(you) = source.obj_type {
                     you.dir
                 }
@@ -1946,6 +1946,33 @@ fn find_ref<'a>(
     }
 }
 
+/// Tries to find the object, but doesn't error.
+fn try_find_ref<'a>(
+    id: &usize, 
+    locals: &'a HashMap<usize, Object>, 
+    globals: &'a HashMap<usize, Object>,
+    identifiers: &HashMap<usize, String>
+) -> Option<&'a Object> {
+    if let Some(obj) = locals.get(&id) {
+        if let Type::Reference(reference) = obj.obj_type {
+            find_ref(&reference.pointer, locals, globals, identifiers)
+        }
+        else {
+            Some(obj)
+        }
+    }
+    else if let Some(obj) = globals.get(&id) {
+        if let Type::Reference(reference) = obj.obj_type {
+            find_ref(&reference.pointer, locals, globals, identifiers)
+        }
+        else {
+            Some(obj)
+        }
+    }
+    else {
+        None
+    }
+}
 /// Searches for an object in the locals and globals provided. 
 /// If found, returns the cloned value of the object.
 /// If not found, throws an error and returns None. 
