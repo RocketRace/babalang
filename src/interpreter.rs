@@ -1955,7 +1955,7 @@ fn try_find_ref<'a>(
 ) -> Option<&'a Object> {
     if let Some(obj) = locals.get(&id) {
         if let Type::Reference(reference) = obj.obj_type {
-            find_ref(&reference.pointer, locals, globals, identifiers)
+            try_find_ref(&reference.pointer, locals, globals, identifiers)
         }
         else {
             Some(obj)
@@ -1963,7 +1963,7 @@ fn try_find_ref<'a>(
     }
     else if let Some(obj) = globals.get(&id) {
         if let Type::Reference(reference) = obj.obj_type {
-            find_ref(&reference.pointer, locals, globals, identifiers)
+            try_find_ref(&reference.pointer, locals, globals, identifiers)
         }
         else {
             Some(obj)
