@@ -15,11 +15,7 @@ Ensure you have Cargo installed on your machine.
 
 After cloning into this repository, run:
 
-`cargo build --release`,
-
-or alternatively, 
-
-`rustc src/main.rs -Oo babalang`
+`cargo build --release`.
 
 ## Running
 
