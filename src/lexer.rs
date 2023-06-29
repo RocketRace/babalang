@@ -78,6 +78,10 @@ pub fn tokenize(path: Option<String>, source: Option<&mut Vec<u8>>) -> (Vec<Toke
                     state = State::MaybeComment;
                     word_start += 1;
                 }
+                else if c == '#' {
+                    state = State::Comment;
+                    word_start += 1;
+                }
                 else {
                     // The current word won't start here yet
                     word_start += 1;
@@ -121,7 +125,7 @@ pub fn tokenize(path: Option<String>, source: Option<&mut Vec<u8>>) -> (Vec<Toke
                     word_start += 1;
                 }
             }
-            // This certainly is a comment. ("//")
+            // This certainly is a comment. ("//" or "#")
             State::Comment => {
                 if c == '\n' || c == '\r' {
                     state = State::Separator;
