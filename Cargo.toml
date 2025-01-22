@@ -1,7 +1,6 @@
 [package]
 name = "babalang"
 version = "1.1.2"
-authors = ["Olivia Palmu <oliviaspalmu@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/rocketrace/babalang/"
 
